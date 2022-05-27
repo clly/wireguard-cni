@@ -19,7 +19,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net"
+	"os/exec"
+	"strings"
 
+	"github.com/bitfield/script"
 	"github.com/containernetworking/cni/pkg/skel"
 	"github.com/containernetworking/cni/pkg/types"
 	current "github.com/containernetworking/cni/pkg/types/100"
@@ -42,8 +46,8 @@ type PluginConf struct {
 	} `json:"runtimeConfig"`
 
 	// Add plugin-specifc flags here
-	MyAwesomeFlag     bool   `json:"myAwesomeFlag"`
-	AnotherAwesomeArg string `json:"anotherAwesomeArg"`
+	//MyAwesomeFlag     bool   `json:"myAwesomeFlag"`
+	PrivateKey string `json:"privateKey"`
 }
 
 // parseConfig parses the supplied configuration (and prevResult) from stdin.
@@ -64,9 +68,9 @@ func parseConfig(stdin []byte) (*PluginConf, error) {
 	// End previous result parsing
 
 	// Do any validation here
-	if conf.AnotherAwesomeArg == "" {
-		return nil, fmt.Errorf("anotherAwesomeArg must be specified")
-	}
+	//if conf.AnotherAwesomeArg == "" {
+	//	return nil, fmt.Errorf("anotherAwesomeArg must be specified")
+	//}
 
 	return &conf, nil
 }
@@ -103,6 +107,19 @@ func cmdAdd(args *skel.CmdArgs) error {
 	// Pass the prevResult through this plugin to the next one
 	result := prevResult
 
+	// TODO: get randomized
+	link := "wg0"
+
+	p := script.Exec(fmt.Sprintf("ip link add dev %s type wireguard", link))
+	if p.ExitStatus() != 0 {
+		b, err := p.Bytes()
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("failed to create wireguard link %s", string(b))
+	}
+
+	script.Exec("wg set wg0 private-key")
 	// END chained plugin code
 
 	// START originating plugin code
@@ -157,4 +174,53 @@ func main() {
 func cmdCheck(args *skel.CmdArgs) error {
 	// TODO: implement
 	return fmt.Errorf("not implemented")
+}
+
+func noErr(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
+type wg struct {
+	status        string
+	server_pubkey string
+	server_port   string
+	internal_ip   string
+}
+
+func demoPublicKey(publicKey string) (wg, error) {
+	endpoint := "demo.wireguard.com:42912"
+	conn, err := net.Dial("tcp4", endpoint)
+	if err != nil {
+		return wg{}, err
+	}
+	conn.Write([]byte(publicKey))
+	b := make([]byte, 1024)
+	_, err = conn.Read(b)
+	if err != nil {
+		return wg{}, err
+	}
+
+	pieces := strings.Split(strings.TrimSpace(string(b)), ":")
+	w := wg{
+		status:        pieces[0],
+		server_pubkey: pieces[1],
+		server_port:   pieces[2],
+		internal_ip:   pieces[3],
+	}
+	return w, nil
+}
+
+func sh(c string) error {
+
+	args := strings.Split(c, " ")
+	exec.LookPath(args[0])
+	cmd := exec.Command(args[0], args[1:]...)
+	b, err := cmd.Output()
+	fmt.Printf("%s\n", b)
+	if err != nil {
+		return fmt.Errorf("failed to execute %s %w", c, err)
+	}
+	return nil
 }
