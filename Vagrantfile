@@ -24,6 +24,17 @@ Vagrant.configure("2") do |config|
   # URL used as a source for the vm.box defined above
   config.vm.box_url = "https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64-vagrant.box"
 
+  config.vm.define "server" do |server|
+    server.vm.box = "wg-server"
+    server.vm.hostname = "wg-server"
+    server.vm.network "private_network", ip: "192.168.56.11"
+  end
+
+  config.vm.define "peer" do |peer|
+    peer.vm.box = "wg-peer"
+    peer.vm.hostname = "wg-peer"
+    peer.vm.network "private_network", ip: "192.168.56.10"
+  end
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
   # `vagrant box outdated`. This is not recommended.
@@ -42,7 +53,7 @@ Vagrant.configure("2") do |config|
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
-  config.vm.network "private_network", ip: "192.168.56.10"
+
 
   # Create a public network, which generally matched to bridged network.
   # Bridged networks make the machine appear as another physical device on
@@ -79,14 +90,11 @@ Vagrant.configure("2") do |config|
   #  cloud_init.path = "terraform/user-data.yml"
   #end
 
-  config.vm.network "forwarded_port", guest: 4646, host: 4646
+  #config.vm.network "forwarded_port", guest: 4646, host: 4646
   # Enable provisioning with a shell script. Additional provisioners such as
   # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
   # documentation for more information about their specific syntax and use.
   config.vm.provision "shell", inline: <<-SHELL
-EOF
-    apt-get update && apt-get install -y wireguard-tools && apt-get upgrade -y
-
-
+    apt-get update && apt-get install -y wireguard-tools jq containernetworking-plugins && apt-get upgrade -y
   SHELL
 end
