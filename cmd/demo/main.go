@@ -91,7 +91,7 @@ func sh(c string) error {
 	args := strings.Split(c, " ")
 	exec.LookPath(args[0])
 	cmd := exec.Command(args[0], args[1:]...)
-	b, err := cmd.Output()
+	b, err := cmd.CombinedOutput()
 	fmt.Printf("%s\n", b)
 	if err != nil {
 		return fmt.Errorf("failed to execute %s %w", c, err)
