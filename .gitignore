@@ -1,2 +1,11 @@
-wireguard-cni
+# Standard
+**/*.swp
+
+# Environment
 .vagrant/*
+
+# Compilation
+wireguard-cni
+cmd/demo/pkey
+cmd/demo/demo
+
