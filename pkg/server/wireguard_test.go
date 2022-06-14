@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"testing"
 	wireguardv1 "wireguard-cni/gen/wgcni/wireguard/v1"
 
@@ -25,7 +26,7 @@ func Test_Peers(t *testing.T) {
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {
 			r := require.New(t)
-			s := NewIPAMServer()
+			s := NewServer()
 			expectedResponse := connect.NewResponse(testcase.resp)
 			req := connect.NewRequest(testcase.req)
 			resp, err := s.Peers(context.Background(), req)
@@ -49,14 +50,48 @@ func Test_Register(t *testing.T) {
 	}{
 		{
 			name: "HappyPath",
-			req:  &wireguardv1.RegisterRequest{},
+			req: &wireguardv1.RegisterRequest{
+				PublicKey: "abc123",
+				Endpoint:  "192.168.1.1:51820",
+				Route:     "10.0.0.9/24",
+			},
 			resp: &wireguardv1.RegisterResponse{},
+		},
+		{
+			name: "MissingPK",
+			req: &wireguardv1.RegisterRequest{
+				PublicKey: "",
+				Endpoint:  "192.168.1.1:51820",
+				Route:     "10.0.0.0/24",
+			},
+			resp: nil,
+			err:  connect.NewError(connect.CodeFailedPrecondition, errors.New("public_key: cannot be blank.")),
+		},
+		{
+			name: "MissingEndpoint",
+			req: &wireguardv1.RegisterRequest{
+				PublicKey: "abc123",
+				Endpoint:  "",
+				Route:     "10.0.0.0/24",
+			},
+			resp: nil,
+			err:  connect.NewError(connect.CodeFailedPrecondition, errors.New("endpoint: cannot be blank.")),
+		},
+		{
+			name: "MissingRoute",
+			req: &wireguardv1.RegisterRequest{
+				PublicKey: "abc123",
+				Endpoint:  "192.168.1.1:51820",
+				Route:     "",
+			},
+			resp: nil,
+			err:  connect.NewError(connect.CodeFailedPrecondition, errors.New("route: cannot be blank.")),
 		},
 	}
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {
 			r := require.New(t)
-			s := NewIPAMServer()
+			s := NewServer()
 			expectedResponse := connect.NewResponse(testcase.resp)
 			req := connect.NewRequest(testcase.req)
 			resp, err := s.Register(context.Background(), req)

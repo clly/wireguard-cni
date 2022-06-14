@@ -31,7 +31,7 @@ func Test_Alloc(t *testing.T) {
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {
 			r := require.New(t)
-			s := NewIPAMServer()
+			s := NewServer()
 			expectedResponse := connect.NewResponse(testcase.resp)
 			req := connect.NewRequest(testcase.req)
 			resp, err := s.Alloc(context.Background(), req)
