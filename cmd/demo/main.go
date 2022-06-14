@@ -1,58 +1,98 @@
+// Command demo provides a simple Go CLI for creating and removing a wiregaurd
+// interface for connecting to demo.wiregaurd.com.
+//
+// Usage: demo [up|down]
+//
+// Once the interface is created (e.g. 'ip addr' will show wg0) you should be
+// able to visit demo.wiregaurd.com and see your device listed in the output(s).
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
+	"os"
 	"os/exec"
 	"strings"
 	"unicode"
-
-	"github.com/bitfield/script"
 )
 
-func main() {
-	pkey, err := script.Exec("wg genkey").String()
+func up() error {
+	pkey, err := shell("wg", "genkey")
 	if err != nil {
-		panic(err)
+		return err
 	}
+
 	cmd := exec.Command("wg", "pubkey")
 	cmd.Stdin = strings.NewReader(pkey)
 	pubKey, err := cmd.Output()
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	wgstat, err := demoPublicKey(string(pubKey))
+	w, err := demoPublicKey(string(pubKey))
 	if err != nil {
-		panic(err)
+		return err
 	}
-	fmt.Println(wgstat.status)
-	fmt.Println(wgstat.server_pubkey)
-	fmt.Println(wgstat.server_port)
-	internalIP := strings.TrimRightFunc(wgstat.internal_ip, unicode.IsControl)
-	fmt.Println(string(internalIP[0:]))
 
-	//noErr(sh("ip link del dev wg0"))
-	noErr(sh("pwd"))
-	//noErr(sh("ip link add dev wg0 type wireguard"))
-	//checkPipe(script.Exec("ip link add dev wg0 type wireguard"))
-	ioutil.WriteFile("pkey", []byte(pkey), 0444)
-	noErr(sh(fmt.Sprintf("wg set wg0 private-key pkey peer %s allowed-ips 0.0.0.0/0 endpoint demo.wireguard.com:%s persistent-keepalive 25", wgstat.server_pubkey, wgstat.server_port)))
-	noErr(sh(fmt.Sprintf("ip address add %s/24 dev wg0", internalIP)))
-	noErr(sh("ip link set up dev wg0"))
+	log.Println("wg status", w.status)
+	log.Println("wg pubkey", w.server_pubkey)
+	log.Println("wg server port", w.server_port)
+	internalIP := strings.TrimRightFunc(w.internal_ip, unicode.IsControl)
+	log.Println("wg internal ip", string(internalIP[0:]))
+
+	if err := run("ip", "link", "add", "dev", "wg0", "type", "wireguard"); err != nil {
+		return err
+	}
+
+	if err := ioutil.WriteFile("pkey", []byte(pkey), 0444); err != nil {
+		return err
+	}
+
+	if err := run(
+		"wg", "set", "wg0", "private-key", "pkey", "peer", w.server_pubkey,
+		"allowed-ips", "0.0.0.0/0", "endpoint", fmt.Sprintf("demo.wireguard.com:%s", w.server_port),
+		"persistent-keepalive", "25",
+	); err != nil {
+		return err
+	}
+
+	if err := run("ip", "address", "add", fmt.Sprintf("%s/24", internalIP), "dev", "wg0"); err != nil {
+		return err
+	}
+
+	if err := run("ip", "link", "set", "up", "wg0"); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func noErr(err error) {
-	if err != nil {
-		panic(err)
-	}
+func down() error {
+	return run("ip", "link", "del", "dev", "wg0")
 }
-func checkPipe(p *script.Pipe) {
-	fmt.Println(p.ExitStatus())
-	if p.ExitStatus() != 0 {
-		p.Stdout()
-		panic(p.Error())
+
+func main() {
+	mode := "up"
+	if len(os.Args) == 2 {
+		mode = os.Args[1]
+	}
+
+	var err error
+
+	switch mode {
+	case "up":
+		err = up()
+	case "down":
+		err = down()
+	default:
+		err = errors.New("usage: demo [up|down]")
+	}
+
+	if err != nil {
+		log.Fatal("failed:", err)
 	}
 }
 
@@ -63,38 +103,43 @@ type wg struct {
 	internal_ip   string
 }
 
-func demoPublicKey(publicKey string) (wg, error) {
+func (w wg) String() string {
+	return fmt.Sprintf("(%s %s %s %s)", w.status, w.server_pubkey, w.server_port, w.internal_ip)
+}
+
+func demoPublicKey(publicKey string) (*wg, error) {
 	endpoint := "demo.wireguard.com:42912"
 	conn, err := net.Dial("tcp4", endpoint)
 	if err != nil {
-		return wg{}, err
+		return nil, err
 	}
 	conn.Write([]byte(publicKey))
 	b := make([]byte, 1024)
 	_, err = conn.Read(b)
 	if err != nil {
-		return wg{}, err
+		return nil, err
 	}
 
 	pieces := strings.Split(strings.TrimSpace(string(b)), ":")
-	w := wg{
+	return &wg{
 		status:        pieces[0],
 		server_pubkey: pieces[1],
 		server_port:   pieces[2],
 		internal_ip:   pieces[3],
-	}
-	return w, nil
+	}, nil
 }
 
-func sh(c string) error {
+func shell(cmd string, args ...string) (string, error) {
+	c := exec.Command(cmd, args...)
+	b, err := c.CombinedOutput()
+	return string(b), err
+}
 
-	args := strings.Split(c, " ")
-	exec.LookPath(args[0])
-	cmd := exec.Command(args[0], args[1:]...)
-	b, err := cmd.CombinedOutput()
-	fmt.Printf("%s\n", b)
-	if err != nil {
-		return fmt.Errorf("failed to execute %s %w", c, err)
+func run(cmd string, args ...string) error {
+	output, err := shell(cmd, args...)
+	log.Println("run", fmt.Sprintf("[%s %s]", cmd, strings.Join(args, " ")))
+	if len(output) > 0 {
+		fmt.Println(output)
 	}
-	return nil
+	return err
 }
