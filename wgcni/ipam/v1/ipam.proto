@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package wgcni.ipam.v1;
+
+option go_package = "wireguard-cni/gen/wgcni/ipam/v1;ipamv1";
+
+service IPAMService {
+  rpc Alloc(AllocRequest) returns (AllocResponse) {}
+}
+
+enum IPVersion {
+  IP_VERSION_UNSPECIFIED = 0;
+  IP_VERSION_V4 = 1;
+  IP_VERSION_V6 = 2;
+}
+
+message IPAlloc {
+  // address is the IP address of the allocation (192.168.1.0, 192.168.3.5)
+  string address = 1;
+  // netmask is the subnet mask in / notatation (/24, /32)
+  string netmask = 2;
+  IPVersion version = 3;
+}
+
+message AllocRequest {}
+
+message AllocResponse {
+  IPAlloc alloc = 1;
+}

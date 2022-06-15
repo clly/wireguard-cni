@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package wgcni.wireguard.v1;
+
+option go_package = "wireguard-cni/gen/wgcni/wireguard/v1;wireguardv1";
+
+service WireguardService {
+  rpc Register(RegisterRequest) returns (RegisterResponse) {}
+  rpc Peers(PeersRequest) returns (PeersResponse) {}
+}
+
+message RegisterRequest {
+  string public_key = 1;
+  string endpoint = 2;
+  string route = 3;
+}
+
+message RegisterResponse {}
+
+message PeersRequest {}
+
+message PeersResponse {
+  repeated Peer peers = 1;
+}
+
+message Peer {
+  string endpoint = 1;
+  string public_key = 2;
+}
