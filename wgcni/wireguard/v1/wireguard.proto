@@ -5,7 +5,10 @@ package wgcni.wireguard.v1;
 option go_package = "wireguard-cni/gen/wgcni/wireguard/v1;wireguardv1";
 
 service WireguardService {
+  // Register will register a wireguard peer
   rpc Register(RegisterRequest) returns (RegisterResponse) {}
+
+  // Peers rpc will return a list of all wireguard peers
   rpc Peers(PeersRequest) returns (PeersResponse) {}
 }
 
@@ -24,6 +27,7 @@ message PeersResponse {
 }
 
 message Peer {
-  string endpoint = 1;
-  string public_key = 2;
+  string public_key = 1;
+  string endpoint = 2;
+  string route = 3;
 }
