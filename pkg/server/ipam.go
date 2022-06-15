@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"expvar"
 	"log"
 	"net/http"
 	ipamv1 "wireguard-cni/gen/wgcni/ipam/v1"
@@ -18,8 +19,13 @@ func (s *Server) IPAMServiceHandler() (string, http.Handler) {
 	return ipamv1connect.NewIPAMServiceHandler(s)
 }
 
-func NewIPAMServer() *Server {
-	return &Server{}
+func NewServer() *Server {
+	m := new(expvar.Map).Init()
+	expvar.Publish("wireguard", m)
+	return &Server{
+		wgKey:     newMapDB(),
+		expvarMap: m,
+	}
 }
 
 func (s *Server) Alloc(
