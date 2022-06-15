@@ -9,3 +9,5 @@ wireguard-cni
 cmd/demo/pkey
 cmd/demo/demo
 
+# local binary dependencies
+.bin/*
