@@ -34,5 +34,5 @@ func main() {
 
 	mux.Handle("/debug/varz", expvar.Handler())
 	log.Println("listening localhost:8080 ...")
-	http.ListenAndServe("localhost:8080", h2c.NewHandler(mux, &http2.Server{}))
+	log.Fatal(http.ListenAndServe("localhost:8080", h2c.NewHandler(mux, &http2.Server{})))
 }
