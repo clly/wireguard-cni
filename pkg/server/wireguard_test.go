@@ -12,6 +12,8 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
+const defaultPrefix = "10.0.0.0/8"
+
 func Test_Register(t *testing.T) {
 	testcases := []struct {
 		name string
@@ -62,7 +64,8 @@ func Test_Register(t *testing.T) {
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {
 			r := require.New(t)
-			s := NewServer()
+			s, err := NewServer(defaultPrefix, CLUSTER_MODE)
+			r.NoError(err)
 			expectedResponse := connect.NewResponse(testcase.resp)
 			req := connect.NewRequest(testcase.req)
 			resp, err := s.Register(context.Background(), req)
@@ -100,13 +103,14 @@ func Test_Peers(t *testing.T) {
 			peersFunc: func(t *testing.T, m *mapDB) {
 				m.Set("helo", "will-not-marshal")
 			},
-			err: connect.NewError(connect.CodeInternal, errors.New("failed to marshal register request proto: syntax error (line 1:1): invalid value will-not-marshal")),
+			err: connect.NewError(connect.CodeInternal, errors.New("failed to marshal register request proto:\u00a0syntax error (line 1:1): invalid value will-not-marshal")),
 		},
 	}
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {
 			r := require.New(t)
-			s := NewServer()
+			s, err := NewServer(defaultPrefix, CLUSTER_MODE)
+			r.NoError(err)
 			m := newMapDB()
 			if testcase.peersFunc != nil {
 				testcase.peersFunc(t, m)
@@ -114,7 +118,7 @@ func Test_Peers(t *testing.T) {
 				for _, reqS := range reqs {
 					req, err := registerFromString(reqS)
 					if err == nil {
-						s.registerWGKey(req.PublicKey, req)
+						r.NoError(s.registerWGKey(req.PublicKey, req))
 					} else {
 						s.wgKey.Set("helo", "will-not-marshal")
 					}
@@ -125,7 +129,7 @@ func Test_Peers(t *testing.T) {
 			resp, err := s.Peers(context.Background(), req)
 			if testcase.err != nil {
 				r.Error(err)
-				r.EqualError(testcase.err, err.Error())
+				r.EqualError(err, testcase.err.Error())
 			} else {
 				r.NoError(err)
 				for _, peer := range resp.Msg.GetPeers() {

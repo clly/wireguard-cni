@@ -3,11 +3,16 @@ package server
 import (
 	"expvar"
 	"sync"
+
+	goipam "github.com/metal-stack/go-ipam"
 )
 
 type Server struct {
 	wgKey     *mapDB
 	expvarMap *expvar.Map
+	prefix    *goipam.Prefix
+	ipam      goipam.Ipamer
+	mode      IPAM_MODE
 }
 
 type mapDB struct {
