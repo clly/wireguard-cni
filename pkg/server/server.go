@@ -17,8 +17,10 @@ type mapDB struct {
 
 func newMapDB() *mapDB {
 	return &mapDB{
-		db: map[string]string{},
-		m:  &sync.RWMutex{},
+		db: map[string]string{
+			"": "",
+		},
+		m: &sync.RWMutex{},
 	}
 }
 
@@ -33,14 +35,4 @@ func (m *mapDB) Get(k string) (val string, ok bool) {
 	val, ok = m.db[k]
 	m.m.RUnlock()
 	return val, ok
-}
-
-func (m *mapDB) List() []string {
-	m.m.RLock()
-	peers := make([]string, 0, len(m.db))
-	for _, v := range m.db {
-		peers = append(peers, v)
-	}
-	m.m.RUnlock()
-	return peers
 }

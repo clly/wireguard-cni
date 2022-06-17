@@ -7,8 +7,6 @@ require (
 	github.com/bufbuild/connect-go v0.1.0
 	github.com/containernetworking/cni v1.1.0
 	github.com/containernetworking/plugins v1.1.1
-	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
-	github.com/hashicorp/go-uuid v1.0.3
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.19.0
 	github.com/stretchr/testify v1.5.1
@@ -18,9 +16,10 @@ require (
 
 require (
 	bitbucket.org/creachadair/shell v0.0.7 // indirect
-	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
+	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/itchyny/gojq v0.12.7 // indirect
 	github.com/itchyny/timefmt-go v0.1.3 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect

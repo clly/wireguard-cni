@@ -5,7 +5,6 @@ package wgcni.ipam.v1;
 option go_package = "wireguard-cni/gen/wgcni/ipam/v1;ipamv1";
 
 service IPAMService {
-  // Alloc requests a IP address or subnet from the ipam server
   rpc Alloc(AllocRequest) returns (AllocResponse) {}
 }
 
