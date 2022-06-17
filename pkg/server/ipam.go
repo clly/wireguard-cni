@@ -12,19 +12,23 @@ import (
 )
 
 var (
-	_ ipamv1connect.IPAMServiceHandler = &Server{}
+	_               ipamv1connect.IPAMServiceHandler = &Server{}
+	wireguardExpvar                                  = new(expvar.Map).Init()
 )
+
+func init() {
+	expvar.Publish("wireguard", wireguardExpvar)
+}
 
 func (s *Server) IPAMServiceHandler() (string, http.Handler) {
 	return ipamv1connect.NewIPAMServiceHandler(s)
 }
 
 func NewServer() *Server {
-	m := new(expvar.Map).Init()
-	expvar.Publish("wireguard", m)
+	wireguardExpvar.Init()
 	return &Server{
 		wgKey:     newMapDB(),
-		expvarMap: m,
+		expvarMap: wireguardExpvar,
 	}
 }
 
