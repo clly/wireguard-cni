@@ -36,7 +36,7 @@ func Test_Register(t *testing.T) {
 				Route:     "10.0.0.0/24",
 			},
 			resp: nil,
-			err:  connect.NewError(connect.CodeFailedPrecondition, errors.New("public_key: cannot be blank.")),
+			err:  connect.NewError(connect.CodeFailedPrecondition, errors.New("failed to validate: public_key: cannot be blank.")),
 		},
 		{
 			name: "MissingEndpoint",
@@ -46,7 +46,7 @@ func Test_Register(t *testing.T) {
 				Route:     "10.0.0.0/24",
 			},
 			resp: nil,
-			err:  connect.NewError(connect.CodeFailedPrecondition, errors.New("endpoint: cannot be blank.")),
+			err:  connect.NewError(connect.CodeFailedPrecondition, errors.New("failed to validate: endpoint: cannot be blank.")),
 		},
 		{
 			name: "MissingRoute",
@@ -56,7 +56,7 @@ func Test_Register(t *testing.T) {
 				Route:     "",
 			},
 			resp: nil,
-			err:  connect.NewError(connect.CodeFailedPrecondition, errors.New("route: cannot be blank.")),
+			err:  connect.NewError(connect.CodeFailedPrecondition, errors.New("failed to validate: route: cannot be blank.")),
 		},
 	}
 	for _, testcase := range testcases {
