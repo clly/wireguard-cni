@@ -36,8 +36,8 @@ func (m *mapDB) Get(k string) (val string, ok bool) {
 }
 
 func (m *mapDB) List() []string {
-	peers := make([]string, 0, len(m.db))
 	m.m.RLock()
+	peers := make([]string, 0, len(m.db))
 	for _, v := range m.db {
 		peers = append(peers, v)
 	}
