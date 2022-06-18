@@ -23,15 +23,16 @@ all: proto test build
 
 .PHONY: proto
 proto: $(BUF) buf/lint
-	@buf generate
+	@$(BUF) generate
 
 .PHONY: buf/install
 buf/install: ## installs buf
-	@curl -sSL "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-$$(uname -s)-$$(uname -m)" \
+	curl -sSL "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-$$(uname -s)-$$(uname -m)" \
     -o "${BIN}/buf" && \
   chmod +x "${BIN}/buf"
 
-$(BUF): buf/install
+$(BUF):
+	make buf/install
 
 .PHONY: buf/lint
 buf/lint: $(BUF)

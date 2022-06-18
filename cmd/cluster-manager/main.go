@@ -2,6 +2,7 @@ package main
 
 import (
 	"expvar"
+	"flag"
 	"log"
 	"net/http"
 	"wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
@@ -17,10 +18,19 @@ var (
 	_ wireguardv1connect.WireguardServiceHandler = &server.Server{}
 )
 
+type ClusterManagerConfig struct {
+	ipamMode server.IPAM_MODE
+	prefix   string
+}
+
 func main() {
 	log.Println("initializing cluster-manager")
+	c := config()
 	log.Println("initializing server")
-	s := server.NewServer()
+	s, err := server.NewServer(c.prefix, c.ipamMode)
+	if err != nil {
+		log.Fatal(err)
+	}
 	log.Println("initializing serve mux")
 	mux := http.NewServeMux()
 
@@ -34,5 +44,14 @@ func main() {
 
 	mux.Handle("/debug/varz", expvar.Handler())
 	log.Println("listening localhost:8080 ...")
-	http.ListenAndServe("localhost:8080", h2c.NewHandler(mux, &http2.Server{}))
+	log.Fatal(http.ListenAndServe("localhost:8080", h2c.NewHandler(mux, &http2.Server{})))
+}
+
+func config() ClusterManagerConfig {
+	cidrPrefix := flag.String("cidr-prefix", "10.0.0.0/8", "Ipam CIDR prefix")
+	flag.Parse()
+	return ClusterManagerConfig{
+		ipamMode: server.CLUSTER_MODE,
+		prefix:   *cidrPrefix,
+	}
 }

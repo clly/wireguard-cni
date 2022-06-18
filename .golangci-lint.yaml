@@ -2,6 +2,7 @@ run:
   skip-files:
     - "sample.*.go"
     - cmd/demo/main.go
+    - ^main.go
 ## This file contains all available configuration options
 ## with their default values.
 #
