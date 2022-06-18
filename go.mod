@@ -8,6 +8,7 @@ require (
 	github.com/containernetworking/cni v1.1.0
 	github.com/containernetworking/plugins v1.1.1
 	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
+	github.com/hashicorp/go-cleanhttp v0.5.2
 	github.com/hashicorp/go-uuid v1.0.3
 	github.com/metal-stack/go-ipam v1.8.6
 	github.com/onsi/ginkgo v1.16.5
