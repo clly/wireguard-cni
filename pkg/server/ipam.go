@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"expvar"
-	"fmt"
 	"log"
 	"net/http"
 	"sync"
@@ -68,7 +67,6 @@ func (s *Server) Alloc(
 	ctx context.Context,
 	req *connect.Request[ipamv1.AllocRequest],
 ) (*connect.Response[ipamv1.AllocResponse], error) {
-	log.Println("Headers", req.Header())
 
 	alloc := &ipamv1.IPAlloc{
 		Netmask: "24",
@@ -77,7 +75,6 @@ func (s *Server) Alloc(
 
 	switch s.mode {
 	case CLUSTER_MODE:
-		fmt.Println(s.prefix.Cidr)
 		prefix, err := s.ipam.AcquireChildPrefix(s.prefix.Cidr, 24)
 		if err != nil {
 			return nil, err
@@ -98,6 +95,8 @@ func (s *Server) Alloc(
 	response := &ipamv1.AllocResponse{
 		Alloc: alloc,
 	}
+
+	log.Printf("Allocated new /%s CIDR %s\n", alloc.Netmask, alloc.Address)
 
 	return connect.NewResponse(response), nil
 }

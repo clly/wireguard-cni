@@ -27,7 +27,9 @@ const (
 
 // WireguardServiceClient is a client for the wgcni.wireguard.v1.WireguardService service.
 type WireguardServiceClient interface {
+	// Register will register a wireguard peer
 	Register(context.Context, *connect_go.Request[v1.RegisterRequest]) (*connect_go.Response[v1.RegisterResponse], error)
+	// Peers rpc will return a list of all wireguard peers
 	Peers(context.Context, *connect_go.Request[v1.PeersRequest]) (*connect_go.Response[v1.PeersResponse], error)
 }
 
@@ -72,7 +74,9 @@ func (c *wireguardServiceClient) Peers(ctx context.Context, req *connect_go.Requ
 
 // WireguardServiceHandler is an implementation of the wgcni.wireguard.v1.WireguardService service.
 type WireguardServiceHandler interface {
+	// Register will register a wireguard peer
 	Register(context.Context, *connect_go.Request[v1.RegisterRequest]) (*connect_go.Response[v1.RegisterResponse], error)
+	// Peers rpc will return a list of all wireguard peers
 	Peers(context.Context, *connect_go.Request[v1.PeersRequest]) (*connect_go.Response[v1.PeersResponse], error)
 }
 

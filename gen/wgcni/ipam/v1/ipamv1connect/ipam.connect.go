@@ -27,6 +27,7 @@ const (
 
 // IPAMServiceClient is a client for the wgcni.ipam.v1.IPAMService service.
 type IPAMServiceClient interface {
+	// Alloc requests a IP address or subnet from the ipam server
 	Alloc(context.Context, *connect_go.Request[v1.AllocRequest]) (*connect_go.Response[v1.AllocResponse], error)
 }
 
@@ -60,6 +61,7 @@ func (c *iPAMServiceClient) Alloc(ctx context.Context, req *connect_go.Request[v
 
 // IPAMServiceHandler is an implementation of the wgcni.ipam.v1.IPAMService service.
 type IPAMServiceHandler interface {
+	// Alloc requests a IP address or subnet from the ipam server
 	Alloc(context.Context, *connect_go.Request[v1.AllocRequest]) (*connect_go.Response[v1.AllocResponse], error)
 }
 
