@@ -38,8 +38,8 @@ func main() {
 	mux.Handle(path, handler)
 
 	mux.Handle("/debug/varz", expvar.Handler())
-	log.Println("listening localhost:8080 ...")
-	log.Fatal(http.ListenAndServe("localhost:8080", h2c.NewHandler(mux, &http2.Server{})))
+	log.Println("listening localhost:5242 ...")
+	log.Fatal(http.ListenAndServe("localhost:5242", h2c.NewHandler(mux, &http2.Server{})))
 
 }
 
@@ -48,7 +48,7 @@ type NodeConfig struct {
 }
 
 func config() NodeConfig {
-	clusterMgrAddr := flag.String("cluster-manager-addr", "localhost:8080", "CNI Cluster Manager address")
+	clusterMgrAddr := flag.String("cluster-manager-url", "http://localhost:8080", "CNI Cluster Manager address")
 	flag.Parse()
 
 	return NodeConfig{
