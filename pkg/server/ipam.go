@@ -46,7 +46,7 @@ func NewServer(cidr string, ipamMode IPAM_MODE) (*Server, error) {
 	}
 
 	once.Do(func() {
-		expvar.Publish("foo", expvar.Func(ipamUsage(prefix)))
+		expvar.Publish("ipam-usage", expvar.Func(ipamUsage(ipam, prefix.Cidr)))
 	})
 
 	return &Server{
@@ -58,10 +58,9 @@ func NewServer(cidr string, ipamMode IPAM_MODE) (*Server, error) {
 	}, nil
 }
 
-func ipamUsage(p *goipam.Prefix) func() any {
-	var prefix = p
+func ipamUsage(i goipam.Ipamer, cidrPrefix string) func() any {
 	return func() any {
-		return prefix.Usage()
+		return i.PrefixFrom(cidrPrefix).Usage()
 	}
 }
 
