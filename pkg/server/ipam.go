@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"expvar"
-	"fmt"
 	"log"
 	"net/http"
 	"sync"
@@ -46,7 +45,7 @@ func NewServer(cidr string, ipamMode IPAM_MODE) (*Server, error) {
 	}
 
 	once.Do(func() {
-		expvar.Publish("foo", expvar.Func(ipamUsage(prefix)))
+		expvar.Publish("ipam-usage", expvar.Func(ipamUsage(ipam, prefix.Cidr)))
 	})
 
 	return &Server{
@@ -58,10 +57,9 @@ func NewServer(cidr string, ipamMode IPAM_MODE) (*Server, error) {
 	}, nil
 }
 
-func ipamUsage(p *goipam.Prefix) func() any {
-	var prefix = p
+func ipamUsage(i goipam.Ipamer, cidrPrefix string) func() any {
 	return func() any {
-		return prefix.Usage()
+		return i.PrefixFrom(cidrPrefix).Usage()
 	}
 }
 
@@ -69,7 +67,6 @@ func (s *Server) Alloc(
 	ctx context.Context,
 	req *connect.Request[ipamv1.AllocRequest],
 ) (*connect.Response[ipamv1.AllocResponse], error) {
-	log.Println("Headers", req.Header())
 
 	alloc := &ipamv1.IPAlloc{
 		Netmask: "24",
@@ -78,7 +75,6 @@ func (s *Server) Alloc(
 
 	switch s.mode {
 	case CLUSTER_MODE:
-		fmt.Println(s.prefix.Cidr)
 		prefix, err := s.ipam.AcquireChildPrefix(s.prefix.Cidr, 24)
 		if err != nil {
 			return nil, err
@@ -99,6 +95,8 @@ func (s *Server) Alloc(
 	response := &ipamv1.AllocResponse{
 		Alloc: alloc,
 	}
+
+	log.Printf("Allocated new /%s CIDR %s\n", alloc.Netmask, alloc.Address)
 
 	return connect.NewResponse(response), nil
 }
