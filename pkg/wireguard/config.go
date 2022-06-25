@@ -3,7 +3,6 @@ package wireguard
 import (
 	"context"
 	"log"
-
 	wireguardv1 "wireguard-cni/gen/wgcni/wireguard/v1"
 	"wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
 
@@ -11,17 +10,35 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
+var (
+	_ WireguardManager = WGQuickManager{}
+)
+
 type Config struct {
 	Endpoint string
 	Route    string
 }
 
+// WireguardManager creates and deletes Wireguard interfaces, generates wireguard configuration and can update peers on
+// a wireguard interface
+type WireguardManager interface {
+	//Config(w io.Writer) error
+	//Up(interface string) error
+	//Down(interface string) error
+	//SetPeers([]*Peer)
+}
+
+// WGQuickManager implements WireguardManager using shell scripts and wg-quick
+type WGQuickManager struct {
+	client wireguardv1connect.WireguardServiceClient
+}
+
 // deviceName string,
-func New(ctx context.Context, cfg Config, client wireguardv1connect.WireguardServiceClient) error {
+func New(ctx context.Context, cfg Config, client wireguardv1connect.WireguardServiceClient) (WireguardManager, error) {
 	log.Println("generating public keys")
 	key, err := generateKeys()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	expWireguardPublicKey.Set(key.PublicKey().String())
@@ -37,7 +54,7 @@ func New(ctx context.Context, cfg Config, client wireguardv1connect.WireguardSer
 		log.Println("failed to register with upstream", err)
 	}
 
-	return err
+	return nil, err
 }
 
 func generateKeys() (wgtypes.Key, error) {
