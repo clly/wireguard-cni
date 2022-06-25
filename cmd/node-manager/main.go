@@ -4,8 +4,8 @@ import (
 	"context"
 	"expvar"
 	"flag"
-	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
 	"wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
@@ -56,13 +56,13 @@ type NodeConfig struct {
 
 func config() NodeConfig {
 	ip, err := sockaddr.GetPrivateIP()
-	ip = fmt.Sprintf("%s:51820", ip)
+	addr := net.JoinHostPort(ip, "51820")
 	if err != nil {
 		log.Println("failed to discover default address")
-		ip = ""
+		addr = ""
 	}
 	clusterMgrAddr := flag.String("cluster-manager-url", "http://localhost:8080", "CNI Cluster Manager address")
-	wireguardEndpoint := flag.String("wireguard-endpoint", ip, "endpoint:port for the wireguard socket")
+	wireguardEndpoint := flag.String("wireguard-endpoint", addr, "endpoint:port for the wireguard socket")
 
 	flag.Parse()
 
