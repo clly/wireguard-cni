@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var _ WireguardManager = (*WGQuickManager)(nil)
+
 func Test_New(t *testing.T) {
 	tests := []struct {
 		name string
@@ -34,7 +36,7 @@ func Test_New(t *testing.T) {
 			wireguardM.On("Register", mock.Anything, mock.Anything).
 				Return(nil, nil)
 
-			err := New(context.Background(), cfg, wireguardM)
+			_, err := New(context.Background(), cfg, wireguardM)
 			r.NoError(err)
 
 			_ = &wireguardv1.RegisterRequest{

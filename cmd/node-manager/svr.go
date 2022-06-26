@@ -35,7 +35,7 @@ func NewNodeManagerServer(ctx context.Context, cfg NodeConfig, ipamClient ipamv1
 	cfg.Wireguard.Route = cidr
 	wgCidrPrefix.Set(cidr)
 
-	err = wireguard.New(ctx, cfg.Wireguard, wireguardClient)
+	_, err = wireguard.New(ctx, cfg.Wireguard, wireguardClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start wireguard manager %w", err)
 	}
