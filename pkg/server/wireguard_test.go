@@ -103,7 +103,7 @@ func Test_Peers(t *testing.T) {
 			peersFunc: func(t *testing.T, m *mapDB) {
 				m.Set("helo", "will-not-marshal")
 			},
-			err: connect.NewError(connect.CodeInternal, errors.New("failed to marshal register request proto:\u00a0syntax error (line 1:1): invalid value will-not-marshal")),
+			err: connect.NewError(connect.CodeInternal, errors.New("failed to marshal register request proto: syntax error (line 1:1): invalid value will-not-marshal")),
 		},
 	}
 	for _, testcase := range testcases {

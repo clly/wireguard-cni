@@ -32,7 +32,7 @@ func (s *Server) Register(ctx context.Context,
 
 	err = s.registerWGKey(pk, req.Msg)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to register public key %w", err))
 	}
 
 	rp := &wireguardv1.RegisterResponse{}
@@ -82,5 +82,5 @@ func registerFromString(s string) (*wireguardv1.RegisterRequest, error) {
 		return nil, err
 	}
 
-	return p, err
+	return p, nil
 }
