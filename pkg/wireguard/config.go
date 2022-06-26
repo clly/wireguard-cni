@@ -19,14 +19,14 @@ type Config struct {
 // a wireguard interface
 type WireguardManager interface {
 	//Config(w io.Writer) error
-	//Up(interface string) error
+	Up(device string) error
 	//Down(interface string) error
 	//SetPeers([]*Peer)
 }
 
 // WGQuickManager implements WireguardManager using shell scripts and wg-quick
 type WGQuickManager struct {
-	client wireguardv1connect.WireguardServiceClient
+	//client wireguardv1connect.WireguardServiceClient
 }
 
 // deviceName string,
