@@ -58,7 +58,7 @@ func (s *Server) Peers(ctx context.Context,
 	for _, v := range keyList {
 		regReq, err := registerFromString(v)
 		if err != nil {
-			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to marshal register request %w", err))
+			return nil, connect.NewError(connect.CodeInternal, err)
 		}
 		p := &wireguardv1.Peer{
 			PublicKey: regReq.GetPublicKey(),
