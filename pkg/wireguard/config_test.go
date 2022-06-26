@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var _ WireguardManager = (*WGQuickManager)(nil)
+
 func Test_New(t *testing.T) {
 	tests := []struct {
 		name string

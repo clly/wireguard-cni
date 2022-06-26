@@ -10,10 +10,6 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
-var (
-	_ WireguardManager = WGQuickManager{}
-)
-
 type Config struct {
 	Endpoint string
 	Route    string
