@@ -7,13 +7,8 @@ import (
 	"strings"
 )
 
-func (w *WGQuickManager) up(deviceName string) error {
-	output, err := shell("wg-quick", "up", deviceName)
-	if err != nil {
-		return err
-	}
-	log.Println(output)
-	return nil
+func (w *WGQuickManager) Up(device string) error {
+	return run("wg-quick", "up", device)
 }
 
 func shell(cmd string, args ...string) (string, error) {

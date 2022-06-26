@@ -26,7 +26,7 @@ type WireguardManager interface {
 
 // WGQuickManager implements WireguardManager using shell scripts and wg-quick
 type WGQuickManager struct {
-	client wireguardv1connect.WireguardServiceClient
+	//client wireguardv1connect.WireguardServiceClient
 }
 
 // deviceName string,
