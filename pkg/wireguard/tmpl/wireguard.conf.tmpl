@@ -1,0 +1,17 @@
+[Interface]
+Address = {{ .Address }}
+PrivateKey = {{ .PrivateKey }}
+ListenPort = {{ .Port }}
+{{- if .PostUp }}
+
+{{ end }}
+{{- if .PostDown }}
+
+{{ end }}
+
+{{- range $index, $peer := .Peers }}
+[Peer]
+Endpoint = {{ $peer.Endpoint }}
+PublicKey = {{ $peer.PublicKey }}
+AllowedIPs = {{ $peer.AllowedIPs }}
+{{- end }}
