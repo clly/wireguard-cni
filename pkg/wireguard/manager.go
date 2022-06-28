@@ -2,6 +2,7 @@ package wireguard
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os/exec"
 	"strings"
@@ -24,4 +25,8 @@ func run(cmd string, args ...string) error {
 		fmt.Println(output)
 	}
 	return err
+}
+
+func (w *WGQuickManager) Config(writer io.Writer) error {
+	return nil
 }
