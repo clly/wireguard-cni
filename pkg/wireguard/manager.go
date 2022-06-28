@@ -11,6 +11,10 @@ func (w *WGQuickManager) Up(device string) error {
 	return run("wg-quick", "up", device)
 }
 
+func (w *WGQuickManager) Down(device string) error {
+	return run("wg-quick", "down", device)
+}
+
 func shell(cmd string, args ...string) (string, error) {
 	c := exec.Command(cmd, args...)
 	b, err := c.CombinedOutput()
