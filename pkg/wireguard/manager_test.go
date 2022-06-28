@@ -20,7 +20,11 @@ func Test_WGQuick_Config(t *testing.T) {
 		peers []*wireguardv1.Peer
 	}{
 		{
-			name: "EmptyPeers",
+			name: "NilPeers",
+		},
+		{
+			name:  "EmptyPeers",
+			peers: []*wireguardv1.Peer{},
 		},
 	}
 
