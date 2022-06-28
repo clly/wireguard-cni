@@ -4,12 +4,13 @@ PrivateKey = {{ .PrivateKey }}
 ListenPort = {{ .Port }}
 {{- if .PostUp }}
 
-{{ end }}
+{{- end }}
 {{- if .PostDown }}
 
-{{ end }}
+{{- end }}
 
 {{- range $index, $peer := .Peers }}
+
 [Peer]
 Endpoint = {{ $peer.Endpoint }}
 PublicKey = {{ $peer.PublicKey }}

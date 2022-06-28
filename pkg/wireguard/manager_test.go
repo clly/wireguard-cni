@@ -26,6 +26,16 @@ func Test_WGQuick_Config(t *testing.T) {
 			name:  "EmptyPeers",
 			peers: []*wireguardv1.Peer{},
 		},
+		{
+			name: "OnePeer",
+			peers: []*wireguardv1.Peer{
+				{
+					PublicKey: "abc=",
+					Endpoint:  "192.168.1.2:51820",
+					Route:     "10.0.0.0/24",
+				},
+			},
+		},
 	}
 
 	for _, testcase := range testcases {
