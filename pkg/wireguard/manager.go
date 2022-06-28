@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"os/exec"
 	"strings"
 	"text/template"
@@ -39,7 +40,7 @@ var wgConfigTemplate string
 type wgConfig struct {
 	Address    string
 	PrivateKey string
-	Port       int
+	Port       string
 	PostUp     *string
 	PostDown   *string
 	Peers      []Peer
@@ -62,10 +63,15 @@ func (w *WGQuickManager) Config(writer io.Writer) error {
 		return err
 	}
 
+	host, port, err := net.SplitHostPort(w.endpoint)
+	if err != nil {
+		return err
+	}
+
 	cfg := wgConfig{
-		Address:    "",
-		PrivateKey: "",
-		Port:       0,
+		Address:    host,
+		PrivateKey: w.key.String(),
+		Port:       port,
 		PostUp:     nil,
 		PostDown:   nil,
 		Peers:      fromPeerSlice(peers.Msg.GetPeers()),

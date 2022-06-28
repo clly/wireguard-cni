@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"testing"
+
 	wireguardv1 "wireguard-cni/gen/wgcni/wireguard/v1"
 	"wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
 
@@ -28,7 +29,9 @@ func Test_WGQuick_Config(t *testing.T) {
 			r := require.New(t)
 			wireguardM := &wireguardv1connect.MockWireguardServiceClient{}
 			wgManager := &WGQuickManager{
-				client: wireguardM,
+				client:   wireguardM,
+				key:      [32]byte{},
+				endpoint: "192.168.1.1:51820",
 			}
 
 			wireguardM.On("Peers", mock.Anything, mock.Anything).

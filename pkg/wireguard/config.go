@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"log"
+
 	wireguardv1 "wireguard-cni/gen/wgcni/wireguard/v1"
 	"wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
 
@@ -27,7 +28,9 @@ type WireguardManager interface {
 
 // WGQuickManager implements WireguardManager using shell scripts and wg-quick
 type WGQuickManager struct {
-	client wireguardv1connect.WireguardServiceClient
+	client   wireguardv1connect.WireguardServiceClient
+	key      wgtypes.Key
+	endpoint string
 }
 
 //
