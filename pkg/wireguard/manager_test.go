@@ -20,7 +20,8 @@ func Test_WGQuick_Config(t *testing.T) {
 		peers []*wireguardv1.Peer
 	}{
 		{
-			name: "NilPeers",
+			name:  "NilPeers",
+			peers: nil,
 		},
 		{
 			name:  "EmptyPeers",
@@ -33,6 +34,21 @@ func Test_WGQuick_Config(t *testing.T) {
 					PublicKey: "abc=",
 					Endpoint:  "192.168.1.2:51820",
 					Route:     "10.0.0.0/24",
+				},
+			},
+		},
+		{
+			name: "TwoPeer",
+			peers: []*wireguardv1.Peer{
+				{
+					PublicKey: "abc=",
+					Endpoint:  "192.168.1.2:51820",
+					Route:     "10.0.0.0/24",
+				},
+				{
+					PublicKey: "def=",
+					Endpoint:  "192.168.1.3:51820",
+					Route:     "10.0.0.1/24",
 				},
 			},
 		},
