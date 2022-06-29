@@ -20,7 +20,7 @@ type Config struct {
 type WireguardManager interface {
 	//Config(w io.Writer) error
 	Up(device string) error
-	//Down(interface string) error
+	Down(device string) error
 	//SetPeers([]*Peer)
 }
 
