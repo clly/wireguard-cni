@@ -57,7 +57,11 @@ func (w *WGQuickManager) Config(writer io.Writer) error {
 	if err != nil {
 		return err
 	}
+
 	// We need to feed the context in for tracing in the future
+
+	// This could also be cached and updated in the background in the future or we can add streaming which would
+	// probably be more efficient and everyone could get updated at the same time
 	peers, err := w.client.Peers(context.Background(), connect.NewRequest(&wireguardv1.PeersRequest{}))
 	if err != nil {
 		return err
@@ -74,15 +78,27 @@ func (w *WGQuickManager) Config(writer io.Writer) error {
 		Port:       port,
 		PostUp:     nil,
 		PostDown:   nil,
-		Peers:      fromPeerSlice(peers.Msg.GetPeers()),
+		Peers:      fromPeerSlice(peers.Msg.GetPeers(), w.self()),
 	}
 	return t.Execute(writer, cfg)
 }
 
-func fromPeerSlice(p []*wireguardv1.Peer) []Peer {
-	peers := make([]Peer, 0, len(p))
-	for _, peer := range p {
-		peers = append(peers, fromPeer(peer))
+// we could preconstruct this to lower allocs
+func (w *WGQuickManager) self() Peer {
+	return Peer{
+		Endpoint:  w.endpoint,
+		PublicKey: w.key.PublicKey().String(),
+	}
+}
+
+func fromPeerSlice(pbPeers []*wireguardv1.Peer, self Peer) []Peer {
+	peers := make([]Peer, 0, len(pbPeers))
+	for _, pbPeer := range pbPeers {
+		peer := fromPeer(pbPeer)
+		if peer.PublicKey == self.PublicKey {
+			continue
+		}
+		peers = append(peers, peer)
 	}
 	return peers
 }

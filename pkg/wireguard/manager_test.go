@@ -64,6 +64,13 @@ func Test_WGQuick_Config(t *testing.T) {
 				endpoint: "192.168.1.1:51820",
 			}
 
+			pbPeer := &wireguardv1.Peer{
+				PublicKey: wgManager.self().PublicKey,
+				Endpoint:  wgManager.endpoint,
+				Route:     "",
+			}
+			testcase.peers = append(testcase.peers, pbPeer)
+
 			wireguardM.On("Peers", mock.Anything, mock.Anything).
 				Once().
 				Return(connect.NewResponse(&wireguardv1.PeersResponse{
