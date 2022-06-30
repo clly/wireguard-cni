@@ -2,7 +2,9 @@ package wireguard
 
 import (
 	"context"
+	"io"
 	"log"
+
 	wireguardv1 "wireguard-cni/gen/wgcni/wireguard/v1"
 	"wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
 
@@ -18,7 +20,7 @@ type Config struct {
 // WireguardManager creates and deletes Wireguard interfaces, generates wireguard configuration and can update peers on
 // a wireguard interface
 type WireguardManager interface {
-	//Config(w io.Writer) error
+	Config(w io.Writer) error
 	Up(device string) error
 	Down(device string) error
 	//SetPeers([]*Peer)
@@ -26,10 +28,12 @@ type WireguardManager interface {
 
 // WGQuickManager implements WireguardManager using shell scripts and wg-quick
 type WGQuickManager struct {
-	//client wireguardv1connect.WireguardServiceClient
+	client   wireguardv1connect.WireguardServiceClient
+	key      wgtypes.Key
+	endpoint string
 }
 
-// deviceName string,
+//
 func New(ctx context.Context, cfg Config, client wireguardv1connect.WireguardServiceClient) (WireguardManager, error) {
 	log.Println("generating public keys")
 	key, err := generateKeys()
