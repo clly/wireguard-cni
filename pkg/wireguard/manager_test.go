@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"strings"
 	"testing"
 
 	wireguardv1 "wireguard-cni/gen/wgcni/wireguard/v1"
@@ -82,7 +83,7 @@ func Test_WGQuick_Config(t *testing.T) {
 			r.NoError(err)
 			golden, err := ioutil.ReadFile(fmt.Sprintf("%s/%s.conf", "hack", testcase.name))
 			r.NoError(err)
-			r.Equal(b.String(), string(golden))
+			r.Equal(b.String(), strings.TrimSpace(string(golden)))
 		})
 	}
 }
