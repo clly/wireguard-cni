@@ -54,7 +54,12 @@ func New(ctx context.Context, cfg Config, client wireguardv1connect.WireguardSer
 		log.Println("failed to register with upstream", err)
 	}
 
-	return nil, err
+	mgr := &WGQuickManager{
+		client:   client,
+		key:      key,
+		endpoint: cfg.Endpoint,
+	}
+	return mgr, err
 }
 
 func generateKeys() (wgtypes.Key, error) {
