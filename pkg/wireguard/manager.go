@@ -23,6 +23,15 @@ func (w *WGQuickManager) Down(device string) error {
 	return run("wg-quick", "down", device)
 }
 
+// SetPeers will set peers by bringing the device down and up. The configuration file must be written before calling
+// SetPeers.
+func (w *WGQuickManager) SetPeers(device string, peers []*Peer) error {
+	if err := w.Down(device); err != nil {
+		return err
+	}
+	return w.Up(device)
+}
+
 func shell(cmd string, args ...string) (string, error) {
 	c := exec.Command(cmd, args...)
 	b, err := c.CombinedOutput()
