@@ -20,10 +20,14 @@ type Config struct {
 // WireguardManager creates and deletes Wireguard interfaces, generates wireguard configuration and can update peers on
 // a wireguard interface
 type WireguardManager interface {
+	// Config should write the wireguard configuration file to the provided writer
 	Config(w io.Writer) error
+	// Up should bring the provided device up
 	Up(device string) error
+	// Down should print the provided device down
 	Down(device string) error
-	//SetPeers([]*Peer)
+	// SetPeers should add the provided peers to the provided device. It may manage routes.
+	SetPeers(device string, peers []*Peer) error
 }
 
 // WGQuickManager implements WireguardManager using shell scripts and wg-quick
