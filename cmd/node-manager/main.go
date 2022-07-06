@@ -52,6 +52,8 @@ func main() {
 
 type NodeConfig struct {
 	ClusterManagerAddr string
+	InterfaceName      string
+	ConfigDirectory    string
 	Wireguard          wireguard.Config
 }
 
@@ -64,14 +66,17 @@ func config() NodeConfig {
 	}
 	clusterMgrAddr := flag.String("cluster-manager-url", "http://localhost:8080", "CNI Cluster Manager address")
 	wireguardEndpoint := flag.String("wireguard-endpoint", addr, "endpoint:port for the wireguard socket")
+	interfaceName := flag.String("wireguard-interface", "wg0", "wireguard interface name")
+	configDirectory := flag.String("wireguard-config-directory", "/etc/wireguard", "Wireguard configuration directory")
 
 	flag.Parse()
 
 	return NodeConfig{
 		ClusterManagerAddr: *clusterMgrAddr,
+		ConfigDirectory:    *configDirectory,
+		InterfaceName:      *interfaceName,
 		Wireguard: wireguard.Config{
 			Endpoint: *wireguardEndpoint,
-			Route:    "",
 		},
 	}
 }
