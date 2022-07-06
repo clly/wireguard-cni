@@ -7,6 +7,8 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
 
 	"wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
 	"wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
@@ -32,6 +34,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	quit(svr, cfg.InterfaceName)
 
 	log.Println("initializing serve mux")
 	mux := http.NewServeMux()
@@ -78,5 +82,26 @@ func config() NodeConfig {
 		Wireguard: wireguard.Config{
 			Endpoint: *wireguardEndpoint,
 		},
+	}
+}
+
+func quit(mgr *NodeManagerServer, device string) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+
+	go func() {
+		<-c
+		log.Println("shutting down...")
+		logOnErr(mgr.wgManager.Down(device))
+		for _, cancel := range mgr.cancelers {
+			cancel()
+		}
+		os.Exit(1)
+	}()
+}
+
+func logOnErr(err error) {
+	if err != nil {
+		log.Println(err)
 	}
 }
