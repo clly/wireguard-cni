@@ -16,6 +16,16 @@ import (
 
 const cfgFile = "hack/wg0.conf"
 
+type TestManager struct {
+	wireguard.WireguardManager
+}
+
+func (t *TestManager) SetPeers(device string, peers []*wireguard.Peer) error {
+	return nil
+}
+
+var _ wireguard.WireguardManager = (*TestManager)(nil)
+
 func Test_PeerManagerRunner(t *testing.T) {
 	r := require.New(t)
 	clientM := &wireguardv1connect.MockWireguardServiceClient{}
@@ -57,11 +67,20 @@ func Test_PeerManagerRunner(t *testing.T) {
 	}, clientM)
 	r.NoError(err)
 
+	tmgr := &TestManager{
+		WireguardManager: mgr,
+	}
+
 	go func() {
-		r.NoError(peerMgr(context.Background(), mgr, cfgFile))
+		r.NoError(peerMgr(context.Background(), tmgr, cfgFile))
 	}()
 
 	time.Sleep(2 * time.Second)
 	_, err = os.Stat(cfgFile)
 	r.NoError(err)
+}
+
+func Test_deviceFromFile(t *testing.T) {
+	device := deviceFromConf(cfgFile)
+	require.Equal(t, "wg0", device)
 }
