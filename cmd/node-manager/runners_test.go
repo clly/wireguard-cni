@@ -58,7 +58,7 @@ func Test_PeerManagerRunner(t *testing.T) {
 	r.NoError(err)
 
 	go func() {
-		r.NoError(peerMgr(mgr, cfgFile))
+		r.NoError(peerMgr(context.Background(), mgr, cfgFile))
 	}()
 
 	time.Sleep(2 * time.Second)

@@ -27,6 +27,7 @@ var (
 type NodeManagerServer struct {
 	*server.Server
 	wgManager wireguard.WireguardManager
+	cancelers []context.CancelFunc
 }
 
 func NewNodeManagerServer(ctx context.Context, cfg NodeConfig, ipamClient ipamv1connect.IPAMServiceClient, wireguardClient wireguardv1connect.WireguardServiceClient) (*NodeManagerServer, error) {
@@ -60,13 +61,15 @@ func NewNodeManagerServer(ctx context.Context, cfg NodeConfig, ipamClient ipamv1
 		return nil, err
 	}
 
+	peerCtx, cancel := context.WithCancel(ctx)
 	go func() {
-		err = peerMgr(wgManager, configFile)
+		err = peerMgr(peerCtx, wgManager, configFile)
 		panic(err)
 	}()
 
 	return &NodeManagerServer{
 		Server:    svr,
 		wgManager: wgManager,
+		cancelers: []context.CancelFunc{cancel},
 	}, nil
 }
