@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"expvar"
 	"fmt"
 	"log"
@@ -64,7 +65,9 @@ func NewNodeManagerServer(ctx context.Context, cfg NodeConfig, ipamClient ipamv1
 	peerCtx, cancel := context.WithCancel(ctx)
 	go func() {
 		err = peerMgr(peerCtx, wgManager, configFile)
-		panic(err)
+		if !errors.Is(err, context.Canceled) {
+			panic(err)
+		}
 	}()
 
 	return &NodeManagerServer{

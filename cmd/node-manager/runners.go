@@ -26,6 +26,7 @@ func peerMgr(ctx context.Context, mgr wireguard.WireguardManager, cfgFile string
 				return err
 			}
 		case <-ctx.Done():
+			log.Println("cancelling peer manager")
 			return ctx.Err()
 		}
 		// call set peers
