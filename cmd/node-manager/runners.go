@@ -1,40 +1,58 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"wireguard-cni/pkg/wireguard"
-
-	"oss.indeed.com/go/libtime"
 )
 
 // peerMgr will set wireguard configuration file and periodically call SetPeers which will call wg-quick down &&
 // wg-quick up
 func peerMgr(ctx context.Context, mgr wireguard.WireguardManager, cfgFile string) error {
-	timer, cancel := libtime.SafeTimer(1 * time.Second)
-	defer cancel()
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+	cfgHash := []byte{}
+	device := deviceFromConf(cfgFile)
 
 	for {
 		select {
-		case <-timer.C:
+		case <-ticker.C:
+			log.Println("Starting config sync...")
 			if err := setConfig(mgr, cfgFile); err != nil {
 				log.Println(err)
 				return err
+			}
+			sha, err := hashFile(cfgFile)
+			if err != nil {
+				return err
+			}
+			if bytes.Equal(sha, cfgHash) {
+				// this should be debug
+				log.Println("skipping SetPeers, config file is unchanged")
+				continue
+			}
+			cfgHash = sha
+			if err := mgr.SetPeers(device, nil); err != nil {
+				log.Println("failed to set peers", err)
 			}
 		case <-ctx.Done():
 			log.Println("cancelling peer manager")
 			return ctx.Err()
 		}
-		// call set peers
 	}
 }
 
 func setConfig(mgr wireguard.WireguardManager, cfgFile string) error {
-	f, err := os.OpenFile(cfgFile, os.O_RDWR|os.O_CREATE, 0644)
+	f, err := os.OpenFile(cfgFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		log.Println("failed to open file", cfgFile)
 		return err
@@ -52,4 +70,21 @@ func setConfig(mgr wireguard.WireguardManager, cfgFile string) error {
 		return fmt.Errorf("failed to close file: %w", err)
 	}
 	return nil
+}
+
+func hashFile(cfgFile string) ([]byte, error) {
+	b, err := ioutil.ReadFile(cfgFile)
+	if err != nil {
+		log.Println("failed to read config file")
+		return nil, err
+	}
+
+	d := sha256.Sum256(b)
+	return d[:], nil
+}
+
+func deviceFromConf(cfgFile string) string {
+	fileName := filepath.Base(cfgFile)
+	device := strings.TrimRight(fileName, filepath.Ext(fileName))
+	return device
 }

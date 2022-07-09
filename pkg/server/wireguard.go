@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"sort"
 	wireguardv1 "wireguard-cni/gen/wgcni/wireguard/v1"
 	"wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
 
@@ -67,6 +68,10 @@ func (s *Server) Peers(ctx context.Context,
 		}
 		peers = append(peers, p)
 	}
+
+	sort.SliceStable(peers, func(i, j int) bool {
+		return peers[i].Route < peers[j].Route
+	})
 
 	p := &wireguardv1.PeersResponse{
 		Peers: peers,
