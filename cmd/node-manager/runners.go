@@ -19,6 +19,7 @@ import (
 // wg-quick up
 func peerMgr(ctx context.Context, mgr wireguard.WireguardManager, cfgFile string) error {
 	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
 	cfgHash := []byte{}
 	device := deviceFromConf(cfgFile)
 
@@ -46,7 +47,6 @@ func peerMgr(ctx context.Context, mgr wireguard.WireguardManager, cfgFile string
 		case <-ctx.Done():
 			return ctx.Err()
 		}
-		// call set peers
 	}
 }
 
