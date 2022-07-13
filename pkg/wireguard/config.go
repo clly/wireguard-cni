@@ -13,8 +13,9 @@ import (
 )
 
 type Config struct {
-	Endpoint string
-	Route    string
+	Endpoint  string
+	Route     string
+	Namespace string
 }
 
 // WireguardManager creates and deletes Wireguard interfaces, generates wireguard configuration and can update peers on
@@ -32,12 +33,12 @@ type WireguardManager interface {
 
 // WGQuickManager implements WireguardManager using shell scripts and wg-quick
 type WGQuickManager struct {
-	client   wireguardv1connect.WireguardServiceClient
-	key      wgtypes.Key
-	endpoint string
+	client    wireguardv1connect.WireguardServiceClient
+	key       wgtypes.Key
+	endpoint  string
+	namespace string
 }
 
-//
 func New(ctx context.Context, cfg Config, client wireguardv1connect.WireguardServiceClient) (WireguardManager, error) {
 	log.Println("generating public keys")
 	key, err := generateKeys()
@@ -59,9 +60,10 @@ func New(ctx context.Context, cfg Config, client wireguardv1connect.WireguardSer
 	}
 
 	mgr := &WGQuickManager{
-		client:   client,
-		key:      key,
-		endpoint: cfg.Endpoint,
+		client:    client,
+		key:       key,
+		endpoint:  cfg.Endpoint,
+		namespace: cfg.Namespace,
 	}
 	return mgr, err
 }

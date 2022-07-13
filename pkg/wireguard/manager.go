@@ -16,7 +16,12 @@ import (
 )
 
 func (w *WGQuickManager) Up(device string) error {
-	return run("wg-quick", "up", device)
+	cmd := []string{}
+	if w.namespace != "" {
+		cmd = append(cmd, "ip", "netns", "exec", w.namespace)
+	}
+	cmd = append(cmd, "wg-quick", "up", device)
+	return run(cmd[0], cmd[1:]...)
 }
 
 func (w *WGQuickManager) Down(device string) error {
