@@ -118,7 +118,7 @@ func cmdAdd(args *skel.CmdArgs) error {
 
 	ctx := context.Background()
 	err = netns.Do(func(netns ns.NetNS) error {
-		return addWgInterface(ctx, *conf, args.ContainerID, netns)
+		return addWgInterface(ctx, *conf, args.ContainerID, result, netns)
 	})
 	if err != nil {
 		return err

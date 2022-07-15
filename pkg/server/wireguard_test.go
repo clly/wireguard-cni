@@ -64,7 +64,7 @@ func Test_Register(t *testing.T) {
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {
 			r := require.New(t)
-			s, err := NewServer(defaultPrefix, CLUSTER_MODE)
+			s, err := NewServer(defaultPrefix, CLUSTER_MODE, nil)
 			r.NoError(err)
 			expectedResponse := connect.NewResponse(testcase.resp)
 			req := connect.NewRequest(testcase.req)
@@ -111,7 +111,7 @@ func Test_Peers(t *testing.T) {
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {
 			r := require.New(t)
-			s, err := NewServer(defaultPrefix, CLUSTER_MODE)
+			s, err := NewServer(defaultPrefix, CLUSTER_MODE, nil)
 			r.NoError(err)
 			m := newMapDB()
 			if testcase.peersFunc != nil {
@@ -126,6 +126,97 @@ func Test_Peers(t *testing.T) {
 					}
 				}
 			}
+
+			req := connect.NewRequest(&wireguardv1.PeersRequest{})
+			resp, err := s.Peers(context.Background(), req)
+			if testcase.err != nil {
+				r.Error(err)
+				r.EqualError(err, testcase.err.Error())
+			} else {
+				r.NoError(err)
+				for _, peer := range resp.Msg.GetPeers() {
+					v, ok := m.Get(peer.PublicKey)
+					r.True(ok)
+					req, err := registerFromString(v)
+					r.NoError(err)
+					r.Equal(req.Endpoint, peer.Endpoint)
+					r.Equal(req.PublicKey, peer.PublicKey)
+					r.Equal(req.Route, peer.Route)
+				}
+			}
+		})
+	}
+}
+
+func self() *wireguardv1.Peer {
+	return &wireguardv1.Peer{
+		PublicKey: "abc123=",
+		Endpoint:  "192.168.1.1:51820",
+		Route:     "0.0.0.0/0",
+	}
+}
+
+func setSelf(t *testing.T, m *mapDB) {
+	r := require.New(t)
+	p := self()
+	req := &wireguardv1.RegisterRequest{
+		PublicKey: p.PublicKey,
+		Endpoint:  p.Endpoint,
+		Route:     p.Route,
+	}
+	b, err := protojson.Marshal(req)
+	r.NoError(err)
+	m.Set(p.PublicKey, string(b))
+}
+
+func Test_PeersNodeMode(t *testing.T) {
+	testcases := []struct {
+		name      string
+		peersFunc func(t *testing.T, m *mapDB)
+		err       error
+	}{
+		{
+			name: "HappyPathEmpty",
+		},
+		{
+			name: "HappyPathWithPeers",
+			peersFunc: func(t *testing.T, m *mapDB) {
+				r := validRegisterReq(t)
+				b, err := protojson.Marshal(r)
+				require.NoError(t, err)
+				m.Set(r.PublicKey, string(b))
+			},
+		},
+		/*
+			{
+				name: "BadValuesInMapDB",
+				peersFunc: func(t *testing.T, m *mapDB) {
+					m.Set("helo", "will-not-marshal")
+				},
+				err: connect.NewError(connect.CodeInternal, errors.New("proto: (line 1:2): unknown field \"will-not-marshal\""")),
+			},
+		*/
+	}
+	for _, testcase := range testcases {
+		t.Run(testcase.name, func(t *testing.T) {
+			r := require.New(t)
+			p := self()
+			s, err := NewServer(defaultPrefix, NODE_MODE, p)
+			r.NoError(err)
+			m := newMapDB()
+			if testcase.peersFunc != nil {
+				testcase.peersFunc(t, m)
+				reqs := m.List()
+				for _, reqS := range reqs {
+					req, err := registerFromString(reqS)
+					if err == nil {
+						r.NoError(s.registerWGKey(req.PublicKey, req))
+					} else {
+						s.wgKey.Set("helo", `{"will-not-marshal":""}`)
+					}
+				}
+			}
+			setSelf(t, m)
 
 			req := connect.NewRequest(&wireguardv1.PeersRequest{})
 			resp, err := s.Peers(context.Background(), req)

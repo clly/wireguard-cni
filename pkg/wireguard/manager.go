@@ -85,10 +85,24 @@ func (w *WGQuickManager) Config(writer io.Writer) error {
 		return err
 	}
 
+	// get the peers that are connected to ourself. Maybe this should be feed differently but this seems easiest right now
+	var selfPbPeers = []*wireguardv1.Peer{}
+	if w.selfClient != nil {
+		msg, err := w.selfClient.Peers(context.Background(), connect.NewRequest(&wireguardv1.PeersRequest{}))
+		if err != nil {
+			return err
+		}
+		selfPbPeers = msg.Msg.Peers
+	}
+
+	cfgPeer := fromPeerSlice(selfPbPeers, w.self())
+
 	host, port, err := net.SplitHostPort(w.endpoint)
 	if err != nil {
 		return err
 	}
+
+	cfgPeer = append(cfgPeer, fromPeerSlice(peers.Msg.GetPeers(), w.self())...)
 
 	cfg := wgConfig{
 		Address:    host,
@@ -96,7 +110,7 @@ func (w *WGQuickManager) Config(writer io.Writer) error {
 		Port:       port,
 		PostUp:     nil,
 		PostDown:   nil,
-		Peers:      fromPeerSlice(peers.Msg.GetPeers(), w.self()),
+		Peers:      cfgPeer,
 	}
 	return t.Execute(writer, cfg)
 }

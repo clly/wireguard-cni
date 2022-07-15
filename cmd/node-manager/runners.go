@@ -22,11 +22,12 @@ func peerMgr(ctx context.Context, mgr wireguard.WireguardManager, cfgFile string
 	defer ticker.Stop()
 	cfgHash := []byte{}
 	device := deviceFromConf(cfgFile)
+	log.Println("Starting config sync...")
 
 	for {
 		select {
 		case <-ticker.C:
-			log.Println("Starting config sync...")
+
 			if err := setConfig(mgr, cfgFile); err != nil {
 				log.Println(err)
 				return err
@@ -37,10 +38,11 @@ func peerMgr(ctx context.Context, mgr wireguard.WireguardManager, cfgFile string
 			}
 			if bytes.Equal(sha, cfgHash) {
 				// this should be debug
-				log.Println("skipping SetPeers, config file is unchanged")
+				//log.Println("skipping SetPeers, config file is unchanged")
 				continue
 			}
 			cfgHash = sha
+			log.Println("New config processed. Setting peers")
 			if err := mgr.SetPeers(device, nil); err != nil {
 				log.Println("failed to set peers", err)
 			}

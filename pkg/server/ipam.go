@@ -8,6 +8,7 @@ import (
 	"sync"
 	ipamv1 "wireguard-cni/gen/wgcni/ipam/v1"
 	"wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
+	wireguardv1 "wireguard-cni/gen/wgcni/wireguard/v1"
 
 	"github.com/bufbuild/connect-go"
 	goipam "github.com/metal-stack/go-ipam"
@@ -34,7 +35,7 @@ func (s *Server) IPAMServiceHandler() (string, http.Handler) {
 	return ipamv1connect.NewIPAMServiceHandler(s)
 }
 
-func NewServer(cidr string, ipamMode IPAM_MODE) (*Server, error) {
+func NewServer(cidr string, ipamMode IPAM_MODE, self *wireguardv1.Peer) (*Server, error) {
 	wireguardExpvar.Init()
 
 	ipam := goipam.New()
@@ -54,6 +55,7 @@ func NewServer(cidr string, ipamMode IPAM_MODE) (*Server, error) {
 		prefix:    prefix,
 		mode:      ipamMode,
 		ipam:      ipam,
+		self:      self,
 	}, nil
 }
 

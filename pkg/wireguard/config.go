@@ -33,13 +33,22 @@ type WireguardManager interface {
 
 // WGQuickManager implements WireguardManager using shell scripts and wg-quick
 type WGQuickManager struct {
-	client    wireguardv1connect.WireguardServiceClient
-	key       wgtypes.Key
-	endpoint  string
-	namespace string
+	client     wireguardv1connect.WireguardServiceClient
+	key        wgtypes.Key
+	endpoint   string
+	namespace  string
+	selfClient wireguardv1connect.WireguardServiceClient
 }
 
-func New(ctx context.Context, cfg Config, client wireguardv1connect.WireguardServiceClient) (WireguardManager, error) {
+func (w *WGQuickManager) Self() Peer {
+	return Peer{
+		Endpoint:   w.endpoint,
+		PublicKey:  w.key.PublicKey().String(),
+		AllowedIPs: "0.0.0.0/0",
+	}
+}
+
+func New(ctx context.Context, cfg Config, client wireguardv1connect.WireguardServiceClient) (*WGQuickManager, error) {
 	log.Println("generating public keys")
 	key, err := generateKeys()
 	if err != nil {
@@ -64,6 +73,7 @@ func New(ctx context.Context, cfg Config, client wireguardv1connect.WireguardSer
 		key:       key,
 		endpoint:  cfg.Endpoint,
 		namespace: cfg.Namespace,
+		//selfClient: selfClient,
 	}
 	return mgr, err
 }

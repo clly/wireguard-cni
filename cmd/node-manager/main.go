@@ -49,7 +49,7 @@ func main() {
 	mux.Handle(path, handler)
 
 	mux.Handle("/debug/varz", expvar.Handler())
-	log.Println("listening localhost:5242 ...")
+	log.Println("listening", cfg.ListenAddr, "...")
 	log.Fatal(http.ListenAndServe("localhost:5242", h2c.NewHandler(mux, &http2.Server{})))
 
 }
@@ -58,6 +58,7 @@ type NodeConfig struct {
 	ClusterManagerAddr string
 	InterfaceName      string
 	ConfigDirectory    string
+	ListenAddr         string
 	Wireguard          wireguard.Config
 }
 
@@ -72,6 +73,7 @@ func config() NodeConfig {
 	wireguardEndpoint := flag.String("wireguard-endpoint", addr, "endpoint:port for the wireguard socket")
 	interfaceName := flag.String("wireguard-interface", "wg0", "wireguard interface name")
 	configDirectory := flag.String("wireguard-config-directory", "/etc/wireguard", "Wireguard configuration directory")
+	listenAddr := flag.String("addr", "localhost:5242", "node manager listen address")
 
 	flag.Parse()
 
@@ -79,6 +81,7 @@ func config() NodeConfig {
 		ClusterManagerAddr: *clusterMgrAddr,
 		ConfigDirectory:    *configDirectory,
 		InterfaceName:      *interfaceName,
+		ListenAddr:         *listenAddr,
 		Wireguard: wireguard.Config{
 			Endpoint: *wireguardEndpoint,
 		},

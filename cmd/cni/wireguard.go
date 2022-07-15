@@ -16,18 +16,20 @@ import (
 	"wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
 	"wireguard-cni/pkg/wireguard"
 
+	current "github.com/containernetworking/cni/pkg/types/100"
+
 	"github.com/bufbuild/connect-go"
 	"github.com/containernetworking/plugins/pkg/ns"
 	"github.com/hashicorp/go-cleanhttp"
-	"github.com/hashicorp/go-sockaddr"
 )
 
-type wgResult struct {
-}
+// type wgResult struct {}
 
-func addWgInterface(ctx context.Context, cfg PluginConf, netnsContainer string, netns ns.NetNS) error {
+func addWgInterface(ctx context.Context, cfg PluginConf, netnsContainer string, result *current.Result, netns ns.NetNS) error {
 
 	return netns.Do(func(nn ns.NetNS) error {
+		ip := result.IPs[0].Address.IP.String()
+
 		ipamClient := ipamv1connect.NewIPAMServiceClient(cleanhttp.DefaultClient(), cfg.NodeManagerAddr)
 		wireguardClient := wireguardv1connect.NewWireguardServiceClient(cleanhttp.DefaultClient(), cfg.NodeManagerAddr)
 
@@ -36,12 +38,6 @@ func addWgInterface(ctx context.Context, cfg PluginConf, netnsContainer string, 
 			return err
 		}
 
-		// This is terrible and hacky and fragile but it'll probably work
-		ip, err := sockaddr.GetPrivateIP()
-		if err != nil {
-			log.Println("failed to discover default address")
-			return err
-		}
 		addr := net.JoinHostPort(ip, "51820")
 		log.Println("Using", addr, "as wireguard endpoint")
 

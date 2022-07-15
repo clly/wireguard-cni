@@ -10,6 +10,7 @@ import (
 
 	ipamv1 "wireguard-cni/gen/wgcni/ipam/v1"
 	"wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
+	wireguardv1 "wireguard-cni/gen/wgcni/wireguard/v1"
 	"wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
 	"wireguard-cni/pkg/server"
 	"wireguard-cni/pkg/wireguard"
@@ -45,7 +46,13 @@ func NewNodeManagerServer(ctx context.Context, cfg NodeConfig, ipamClient ipamv1
 		return nil, fmt.Errorf("failed to start wireguard manager %w", err)
 	}
 
-	svr, err := server.NewServer(cidr, server.NODE_MODE)
+	wgSelf := wgManager.Self()
+
+	svr, err := server.NewServer(cidr, server.NODE_MODE, &wireguardv1.Peer{
+		PublicKey: wgSelf.PublicKey,
+		Endpoint:  wgSelf.Endpoint,
+		Route:     wgSelf.AllowedIPs,
+	})
 	if err != nil {
 		return nil, err
 	}
