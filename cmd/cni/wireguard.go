@@ -39,16 +39,23 @@ func addWgInterface(ctx context.Context, cfg PluginConf, netnsContainer string, 
 		}
 
 		addr := net.JoinHostPort(ip, "51820")
-		log.Println("Using", addr, "as wireguard endpoint")
+		log.Println("Using", ip, "as wireguard endpoint")
+		log.Println("Using", addr, "as wireguard interface address")
 
 		fmt.Fprintf(os.Stderr, "%#v\n", nn.Path())
 
+		wgAddr := resp.Msg.Alloc.Address
+
 		cidr := fmt.Sprintf("%s/%s", resp.Msg.Alloc.Address, resp.Msg.Alloc.Netmask)
+
 		wgConf := wireguard.Config{
+			Address:   wgAddr,
 			Endpoint:  addr,
 			Route:     cidr,
 			Namespace: netnsContainer,
 		}
+
+		fmt.Fprintln(os.Stderr, wgConf)
 		wgMgr, err := wireguard.New(ctx, wgConf, wireguardClient)
 		if err != nil {
 			return err

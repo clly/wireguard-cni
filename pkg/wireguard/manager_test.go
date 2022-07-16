@@ -63,6 +63,7 @@ func Test_WGQuick_Config(t *testing.T) {
 				client:   wireguardM,
 				key:      [32]byte{},
 				endpoint: "192.168.1.1:51820",
+				addr:     "10.0.0.1",
 			}
 
 			pbPeer := &wireguardv1.Peer{

@@ -107,6 +107,8 @@ func cmdAdd(args *skel.CmdArgs) error {
 	// Pass the prevResult through this plugin to the next one
 	result := prevResult
 
+	// We're going to hard code this because I don't have time to really mess around with this
+
 	// END chained plugin code
 
 	netns, err := ns.GetNS(args.Netns)
