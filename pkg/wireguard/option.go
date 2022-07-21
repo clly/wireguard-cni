@@ -9,3 +9,10 @@ func WithOutput(w io.Writer) WGOption {
 		wm.logOutput = w
 	}
 }
+
+func WithPost(postUp, postDown string) WGOption {
+	return func(wm *WGQuickManager) {
+		wm.postup = &postUp
+		wm.postdown = &postDown
+	}
+}

@@ -3,10 +3,10 @@ Address = {{ .Address }}
 PrivateKey = {{ .PrivateKey }}
 ListenPort = {{ .Port }}
 {{- if .PostUp }}
-
+PostUp = {{ .PostUp }}
 {{- end }}
 {{- if .PostDown }}
-
+PostDown = {{ .PostDown }}
 {{- end }}
 
 {{- range $index, $peer := .Peers }}
