@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"os/exec"
+	"sort"
 	"strings"
 	"text/template"
 	wireguardv1 "wireguard-cni/gen/wgcni/wireguard/v1"
@@ -16,7 +17,12 @@ import (
 )
 
 func (w *WGQuickManager) Up(device string) error {
-	return run("wg-quick", "up", device)
+	cmd := []string{}
+	if w.namespace != "" {
+		cmd = append(cmd, "ip", "netns", "exec", w.namespace)
+	}
+	cmd = append(cmd, "wg-quick", "up", device)
+	return run(cmd[0], cmd[1:]...)
 }
 
 func (w *WGQuickManager) Down(device string) error {
@@ -80,19 +86,38 @@ func (w *WGQuickManager) Config(writer io.Writer) error {
 		return err
 	}
 
-	host, port, err := net.SplitHostPort(w.endpoint)
+	// get the peers that are connected to ourself. Maybe this should be feed differently but this seems easiest right now
+	var selfPbPeers = []*wireguardv1.Peer{}
+	if w.peerRegistry != nil {
+		registryPeers, err := w.peerRegistry.ListPeers()
+		if err != nil {
+			return err
+		}
+		selfPbPeers = registryPeers
+	}
+
+	cfgPeer := fromPeerSlice(selfPbPeers, w.self())
+
+	_, port, err := net.SplitHostPort(w.endpoint)
 	if err != nil {
 		return err
 	}
 
+	cfgPeer = append(cfgPeer, fromPeerSlice(peers.Msg.GetPeers(), w.self())...)
+
+	sort.SliceStable(cfgPeer, func(i, j int) bool {
+		return cfgPeer[i].AllowedIPs < cfgPeer[j].AllowedIPs
+	})
+
 	cfg := wgConfig{
-		Address:    host,
+		Address:    w.addr,
 		PrivateKey: w.key.String(),
 		Port:       port,
 		PostUp:     nil,
 		PostDown:   nil,
-		Peers:      fromPeerSlice(peers.Msg.GetPeers(), w.self()),
+		Peers:      cfgPeer,
 	}
+
 	return t.Execute(writer, cfg)
 }
 

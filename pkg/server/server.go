@@ -3,7 +3,9 @@ package server
 import (
 	"expvar"
 	"sync"
+	wireguardv1 "wireguard-cni/gen/wgcni/wireguard/v1"
 
+	"github.com/bufbuild/connect-go"
 	goipam "github.com/metal-stack/go-ipam"
 )
 
@@ -13,6 +15,25 @@ type Server struct {
 	prefix    *goipam.Prefix
 	ipam      goipam.Ipamer
 	mode      IPAM_MODE
+	self      *wireguardv1.Peer
+}
+
+func (s *Server) ListPeers() ([]*wireguardv1.Peer, error) {
+	keyList := s.wgKey.List()
+	peers := make([]*wireguardv1.Peer, 0, len(keyList))
+	for _, v := range keyList {
+		regReq, err := registerFromString(v)
+		if err != nil {
+			return nil, connect.NewError(connect.CodeInternal, err)
+		}
+		p := &wireguardv1.Peer{
+			PublicKey: regReq.GetPublicKey(),
+			Endpoint:  regReq.GetEndpoint(),
+			Route:     regReq.GetRoute(),
+		}
+		peers = append(peers, p)
+	}
+	return peers, nil
 }
 
 type mapDB struct {

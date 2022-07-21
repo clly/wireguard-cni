@@ -13,8 +13,12 @@ import (
 )
 
 type Config struct {
+	// Endpoint is the address that other wireguard nodes should dial
 	Endpoint string
-	Route    string
+	// Address is the ip address that should be set on the wireguard interface
+	Address   string
+	Route     string
+	Namespace string
 }
 
 // WireguardManager creates and deletes Wireguard interfaces, generates wireguard configuration and can update peers on
@@ -32,13 +36,37 @@ type WireguardManager interface {
 
 // WGQuickManager implements WireguardManager using shell scripts and wg-quick
 type WGQuickManager struct {
-	client   wireguardv1connect.WireguardServiceClient
-	key      wgtypes.Key
+	client wireguardv1connect.WireguardServiceClient
+	key    wgtypes.Key
+	// endpoint is the address that other wireguard servers should dial
 	endpoint string
+	// addr is the address that should be set on the wireguard interface
+	addr         string
+	namespace    string
+	peerRegistry Peers
 }
 
-//
-func New(ctx context.Context, cfg Config, client wireguardv1connect.WireguardServiceClient) (WireguardManager, error) {
+func (w *WGQuickManager) SetPeerRegistry(p Peers) {
+	w.peerRegistry = p
+}
+
+func (w *WGQuickManager) SetAddress(addr string) {
+	w.addr = addr
+}
+
+type Peers interface {
+	ListPeers() ([]*wireguardv1.Peer, error)
+}
+
+func (w *WGQuickManager) Self() Peer {
+	return Peer{
+		Endpoint:   w.endpoint,
+		PublicKey:  w.key.PublicKey().String(),
+		AllowedIPs: "0.0.0.0/0",
+	}
+}
+
+func New(ctx context.Context, cfg Config, client wireguardv1connect.WireguardServiceClient) (*WGQuickManager, error) {
 	log.Println("generating public keys")
 	key, err := generateKeys()
 	if err != nil {
@@ -59,9 +87,11 @@ func New(ctx context.Context, cfg Config, client wireguardv1connect.WireguardSer
 	}
 
 	mgr := &WGQuickManager{
-		client:   client,
-		key:      key,
-		endpoint: cfg.Endpoint,
+		client:    client,
+		key:       key,
+		endpoint:  cfg.Endpoint,
+		namespace: cfg.Namespace,
+		addr:      cfg.Address,
 	}
 	return mgr, err
 }

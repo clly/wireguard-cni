@@ -17,18 +17,17 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"net"
-	"os/exec"
-	"strings"
+	"os"
 
-	"github.com/bitfield/script"
 	"github.com/containernetworking/cni/pkg/skel"
 	"github.com/containernetworking/cni/pkg/types"
 	current "github.com/containernetworking/cni/pkg/types/100"
 	"github.com/containernetworking/cni/pkg/version"
 
+	"github.com/containernetworking/plugins/pkg/ns"
 	bv "github.com/containernetworking/plugins/pkg/utils/buildversion"
 )
 
@@ -46,8 +45,7 @@ type PluginConf struct {
 	} `json:"runtimeConfig"`
 
 	// Add plugin-specifc flags here
-	//MyAwesomeFlag     bool   `json:"myAwesomeFlag"`
-	PrivateKey string `json:"privateKey"`
+	NodeManagerAddr string `json:"nodeManagerAddr"`
 }
 
 // parseConfig parses the supplied configuration (and prevResult) from stdin.
@@ -58,6 +56,8 @@ func parseConfig(stdin []byte) (*PluginConf, error) {
 		return nil, fmt.Errorf("failed to parse network configuration: %v", err)
 	}
 
+	// fmt.Fprintf(os.Stderr, "%s", stdin)
+	// fmt.Fprintf(os.Stderr, "%#v", conf)
 	// Parse previous result. This will parse, validate, and place the
 	// previous result object into conf.PrevResult. If you need to modify
 	// or inspect the PrevResult you will need to convert it to a concrete
@@ -68,9 +68,9 @@ func parseConfig(stdin []byte) (*PluginConf, error) {
 	// End previous result parsing
 
 	// Do any validation here
-	//if conf.AnotherAwesomeArg == "" {
-	//	return nil, fmt.Errorf("anotherAwesomeArg must be specified")
-	//}
+	if conf.NodeManagerAddr != "" {
+		conf.NodeManagerAddr = "http://localhost:5242"
+	}
 
 	return &conf, nil
 }
@@ -107,20 +107,24 @@ func cmdAdd(args *skel.CmdArgs) error {
 	// Pass the prevResult through this plugin to the next one
 	result := prevResult
 
-	// TODO: get randomized
-	link := "wg0"
+	// We're going to hard code this because I don't have time to really mess around with this
 
-	p := script.Exec(fmt.Sprintf("ip link add dev %s type wireguard", link))
-	if p.ExitStatus() != 0 {
-		b, err := p.Bytes()
-		if err != nil {
-			return err
-		}
-		return fmt.Errorf("failed to create wireguard link %s", string(b))
+	// END chained plugin code
+
+	netns, err := ns.GetNS(args.Netns)
+	if err != nil {
+		return err
 	}
 
-	script.Exec("wg set wg0 private-key")
-	// END chained plugin code
+	fmt.Fprintf(os.Stderr, "%s\n", args.ContainerID)
+
+	ctx := context.Background()
+	err = netns.Do(func(netns ns.NetNS) error {
+		return addWgInterface(ctx, *conf, args.ContainerID, result, netns)
+	})
+	if err != nil {
+		return err
+	}
 
 	// START originating plugin code
 	// if conf.PrevResult != nil {
@@ -174,53 +178,4 @@ func main() {
 func cmdCheck(args *skel.CmdArgs) error {
 	// TODO: implement
 	return fmt.Errorf("not implemented")
-}
-
-func noErr(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
-type wg struct {
-	status        string
-	server_pubkey string
-	server_port   string
-	internal_ip   string
-}
-
-func demoPublicKey(publicKey string) (wg, error) {
-	endpoint := "demo.wireguard.com:42912"
-	conn, err := net.Dial("tcp4", endpoint)
-	if err != nil {
-		return wg{}, err
-	}
-	conn.Write([]byte(publicKey))
-	b := make([]byte, 1024)
-	_, err = conn.Read(b)
-	if err != nil {
-		return wg{}, err
-	}
-
-	pieces := strings.Split(strings.TrimSpace(string(b)), ":")
-	w := wg{
-		status:        pieces[0],
-		server_pubkey: pieces[1],
-		server_port:   pieces[2],
-		internal_ip:   pieces[3],
-	}
-	return w, nil
-}
-
-func sh(c string) error {
-
-	args := strings.Split(c, " ")
-	exec.LookPath(args[0])
-	cmd := exec.Command(args[0], args[1:]...)
-	b, err := cmd.Output()
-	fmt.Printf("%s\n", b)
-	if err != nil {
-		return fmt.Errorf("failed to execute %s %w", c, err)
-	}
-	return nil
 }

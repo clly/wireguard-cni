@@ -27,7 +27,7 @@ func main() {
 	log.Println("initializing cluster-manager")
 	c := config()
 	log.Println("initializing server")
-	s, err := server.NewServer(c.prefix, c.ipamMode)
+	s, err := server.NewServer(c.prefix, c.ipamMode, nil)
 	if err != nil {
 		log.Fatal(err)
 	}

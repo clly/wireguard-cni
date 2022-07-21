@@ -10,6 +10,7 @@ import (
 
 	ipamv1 "wireguard-cni/gen/wgcni/ipam/v1"
 	"wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
+	wireguardv1 "wireguard-cni/gen/wgcni/wireguard/v1"
 	"wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
 	"wireguard-cni/pkg/server"
 	"wireguard-cni/pkg/wireguard"
@@ -40,15 +41,31 @@ func NewNodeManagerServer(ctx context.Context, cfg NodeConfig, ipamClient ipamv1
 	cfg.Wireguard.Route = cidr
 	wgCidrPrefix.Set(cidr)
 
+	// This is a shitty circular dependency I've created. We need the self for the server to include ourselves in the
+	// peers response but we also need the server to set our own configs, so now it's eventually consistent and I'm sad.
+	// We can refactor it but probably later
 	wgManager, err := wireguard.New(ctx, cfg.Wireguard, wireguardClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start wireguard manager %w", err)
 	}
 
-	svr, err := server.NewServer(cidr, server.NODE_MODE)
+	wgSelf := wgManager.Self()
+
+	svr, err := server.NewServer(cidr, server.NODE_MODE, &wireguardv1.Peer{
+		PublicKey: wgSelf.PublicKey,
+		Endpoint:  wgSelf.Endpoint,
+		Route:     wgSelf.AllowedIPs,
+	})
 	if err != nil {
 		return nil, err
 	}
+
+	selfAlloc, err := svr.Alloc(ctx, &connect.Request[ipamv1.AllocRequest]{})
+	if err != nil {
+		return nil, err
+	}
+	wgManager.SetAddress(selfAlloc.Msg.Alloc.Address)
+	wgManager.SetPeerRegistry(svr)
 
 	configFile := filepath.Join(cfg.ConfigDirectory, fmt.Sprintf("%s.conf", cfg.InterfaceName))
 

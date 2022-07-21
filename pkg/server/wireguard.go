@@ -54,19 +54,13 @@ func (s *Server) Peers(ctx context.Context,
 	req *connect.Request[wireguardv1.PeersRequest],
 ) (*connect.Response[wireguardv1.PeersResponse], error) {
 
-	keyList := s.wgKey.List()
-	peers := make([]*wireguardv1.Peer, 0, len(keyList))
-	for _, v := range keyList {
-		regReq, err := registerFromString(v)
-		if err != nil {
-			return nil, connect.NewError(connect.CodeInternal, err)
-		}
-		p := &wireguardv1.Peer{
-			PublicKey: regReq.GetPublicKey(),
-			Endpoint:  regReq.GetEndpoint(),
-			Route:     regReq.GetRoute(),
-		}
-		peers = append(peers, p)
+	peers, err := s.ListPeers()
+	if err != nil {
+		return nil, err
+	}
+
+	if s.self != nil {
+		peers = append(peers, s.self)
 	}
 
 	sort.SliceStable(peers, func(i, j int) bool {
