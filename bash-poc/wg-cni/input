@@ -1,0 +1,42 @@
+{
+  "type": "wireguard",
+  "nodeManagerAddr": "http://localhost:5000",
+  "name": "wgnet",
+  "cniVersion": "0.4.0",
+  "prevResult": {
+    "cniVersion": "0.4.0",
+    "interfaces": [
+      {
+        "name": "cni0",
+        "mac": "fa:1d:89:9b:3c:ab"
+      },
+      {
+        "name": "vethb60ff325",
+        "mac": "a2:46:f8:76:b5:93"
+      },
+      {
+        "name": "eth0",
+        "mac": "c6:11:77:f8:9d:40",
+        "sandbox": "/var/run/netns/container"
+      }
+    ],
+    "ips": [
+      {
+        "version": "4",
+        "interface": 2,
+        "address": "192.168.0.27/24",
+        "gateway": "192.168.0.1"
+      }
+    ],
+    "routes": [
+      {
+        "dst": "0.0.0.0/0"
+      }
+    ],
+    "dns": {
+      "nameservers": [
+        "10.1.0.1"
+      ]
+    }
+  }
+}

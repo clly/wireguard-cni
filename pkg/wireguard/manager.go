@@ -22,11 +22,11 @@ func (w *WGQuickManager) Up(device string) error {
 		cmd = append(cmd, "ip", "netns", "exec", w.namespace)
 	}
 	cmd = append(cmd, "wg-quick", "up", device)
-	return run(cmd[0], cmd[1:]...)
+	return run(w.logOutput, cmd[0], cmd[1:]...)
 }
 
 func (w *WGQuickManager) Down(device string) error {
-	return run("wg-quick", "down", device)
+	return run(w.logOutput, "wg-quick", "down", device)
 }
 
 // SetPeers will set peers by bringing the device down and up. The configuration file must be written before calling
@@ -44,11 +44,11 @@ func shell(cmd string, args ...string) (string, error) {
 	return string(b), err
 }
 
-func run(cmd string, args ...string) error {
+func run(w io.Writer, cmd string, args ...string) error {
 	output, err := shell(cmd, args...)
 	log.Println("run", fmt.Sprintf("[%s %s]", cmd, strings.Join(args, " ")))
 	if len(output) > 0 {
-		fmt.Println(output)
+		fmt.Fprintln(w, output)
 	}
 	return err
 }

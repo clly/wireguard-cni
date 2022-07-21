@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"log"
+	"os"
 
 	wireguardv1 "wireguard-cni/gen/wgcni/wireguard/v1"
 	"wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
@@ -44,6 +45,7 @@ type WGQuickManager struct {
 	addr         string
 	namespace    string
 	peerRegistry Peers
+	logOutput    io.Writer
 }
 
 func (w *WGQuickManager) SetPeerRegistry(p Peers) {
@@ -66,7 +68,7 @@ func (w *WGQuickManager) Self() Peer {
 	}
 }
 
-func New(ctx context.Context, cfg Config, client wireguardv1connect.WireguardServiceClient) (*WGQuickManager, error) {
+func New(ctx context.Context, cfg Config, client wireguardv1connect.WireguardServiceClient, opts ...WGOption) (*WGQuickManager, error) {
 	log.Println("generating public keys")
 	key, err := generateKeys()
 	if err != nil {
@@ -92,6 +94,11 @@ func New(ctx context.Context, cfg Config, client wireguardv1connect.WireguardSer
 		endpoint:  cfg.Endpoint,
 		namespace: cfg.Namespace,
 		addr:      cfg.Address,
+		logOutput: os.Stdout,
+	}
+
+	for _, opt := range opts {
+		opt(mgr)
 	}
 	return mgr, err
 }

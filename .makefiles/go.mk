@@ -39,7 +39,7 @@ test: lint ## run go tests
 build: ## compile and build artifact
 	@for i in cmd/*; do \
 		echo "building $$i"; \
-		go build ./$$i; \
+		go build -o bin/$$i ./$$i; \
 	done
 
 .PHONY: build/cmd
