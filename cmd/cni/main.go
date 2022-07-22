@@ -137,7 +137,7 @@ func cmdAdd(args *skel.CmdArgs) error {
 		return fmt.Errorf("failed to add interface %w", err)
 	}
 
-	result.PrintTo(os.Stderr)
+	_ = result.PrintTo(os.Stderr)
 
 	// START originating plugin code
 	// if conf.PrevResult != nil {
