@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"log"
 	"math/rand"
 	"net"
 	"os"
@@ -25,9 +24,10 @@ import (
 
 // type wgResult struct {}
 
-func addWgInterface(ctx context.Context, cfg PluginConf, netnsContainer string, result *current.Result, netns ns.NetNS) error {
+func addWgInterface(ctx context.Context, cfg PluginConf, netnsContainer string, result *current.Result, netns ns.NetNS) (string, error) {
 
-	return netns.Do(func(nn ns.NetNS) error {
+	var device string
+	err := netns.Do(func(nn ns.NetNS) error {
 		ip := result.IPs[0].Address.IP.String()
 
 		ipamClient := ipamv1connect.NewIPAMServiceClient(cleanhttp.DefaultClient(), cfg.NodeManagerAddr)
@@ -39,8 +39,8 @@ func addWgInterface(ctx context.Context, cfg PluginConf, netnsContainer string, 
 		}
 
 		addr := net.JoinHostPort(ip, "51820")
-		log.Println("Using", ip, "as wireguard endpoint")
-		log.Println("Using", addr, "as wireguard interface address")
+		// log.Println("Using", ip, "as wireguard endpoint")
+		// log.Println("Using", addr, "as wireguard interface address")
 
 		fmt.Fprintf(os.Stderr, "%#v\n", nn.Path())
 
@@ -56,12 +56,12 @@ func addWgInterface(ctx context.Context, cfg PluginConf, netnsContainer string, 
 		}
 
 		fmt.Fprintln(os.Stderr, wgConf)
-		wgMgr, err := wireguard.New(ctx, wgConf, wireguardClient)
+		wgMgr, err := wireguard.New(ctx, wgConf, wireguardClient, wireguard.WithOutput(os.Stderr))
 		if err != nil {
 			return err
 		}
 
-		device := fmt.Sprintf("wg%s", randomString())
+		device = fmt.Sprintf("wg%s", randomString())
 		readCl, err := openConfig(device)
 		if err != nil {
 			return err
@@ -72,6 +72,8 @@ func addWgInterface(ctx context.Context, cfg PluginConf, netnsContainer string, 
 
 		return wgMgr.Up(device)
 	})
+
+	return device, err
 }
 
 func randomString() string {
@@ -85,4 +87,31 @@ func openConfig(device string) (io.WriteCloser, error) {
 	filename := fmt.Sprintf("%s.conf", device)
 	f := filepath.Join("/etc", "wireguard", filename)
 	return os.OpenFile(f, os.O_CREATE|os.O_TRUNC|os.O_SYNC|os.O_RDWR, 0644)
+}
+
+func getResult(device string, sandbox string) (current.IPConfig, current.Interface, error) {
+	intf, err := net.InterfaceByName(device)
+	if err != nil {
+		return current.IPConfig{}, current.Interface{}, fmt.Errorf("could not retrieve interface by name: %s %w", device, err)
+	}
+	currentInterface := current.Interface{
+		Name:    device,
+		Mac:     intf.HardwareAddr.String(),
+		Sandbox: sandbox,
+	}
+	addrs, err := intf.Addrs()
+	if err != nil {
+		return current.IPConfig{}, current.Interface{}, fmt.Errorf("failed to get addrs %w", err)
+	}
+	_, ipNet, err := net.ParseCIDR(addrs[0].String())
+	if err != nil {
+		return current.IPConfig{}, current.Interface{}, fmt.Errorf("failed to parse cidr %w", err)
+	}
+
+	ipCfg := current.IPConfig{
+		Interface: nil,
+		Address:   *ipNet,
+		Gateway:   ipNet.IP,
+	}
+	return ipCfg, currentInterface, nil
 }
