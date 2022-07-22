@@ -113,8 +113,8 @@ func (w *WGQuickManager) Config(writer io.Writer) error {
 		Address:    w.addr,
 		PrivateKey: w.key.String(),
 		Port:       port,
-		PostUp:     nil,
-		PostDown:   nil,
+		PostUp:     w.postup,
+		PostDown:   w.postdown,
 		Peers:      cfgPeer,
 	}
 

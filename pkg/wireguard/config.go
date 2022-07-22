@@ -45,7 +45,10 @@ type WGQuickManager struct {
 	addr         string
 	namespace    string
 	peerRegistry Peers
-	logOutput    io.Writer
+
+	logOutput io.Writer
+	postup    *string
+	postdown  *string
 }
 
 func (w *WGQuickManager) SetPeerRegistry(p Peers) {

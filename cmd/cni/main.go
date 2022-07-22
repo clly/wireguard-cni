@@ -121,7 +121,7 @@ func cmdAdd(args *skel.CmdArgs) error {
 	err = netns.Do(func(netns ns.NetNS) error {
 		device, err = addWgInterface(ctx, *conf, args.ContainerID, result, netns)
 
-		ip, iface, err := getResult(device, args.ContainerID)
+		ip, iface, err := getResult(device, args.Netns)
 
 		if err != nil {
 			return fmt.Errorf("failed to get result %w", err)

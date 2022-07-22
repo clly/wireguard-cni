@@ -20,10 +20,19 @@ import (
 
 func init() {
 	expvar.Publish("ipam-cidr", &wgCidrPrefix)
+	expvar.Publish("iptables-post-up", &postUpVar)
+	expvar.Publish("iptables-post-down", &postDownVar)
 }
 
 var (
 	wgCidrPrefix expvar.String
+	postUpVar    expvar.String
+	postDownVar  expvar.String
+)
+
+const (
+	PostUp   = "iptables -A FORWARD -i %%i -j ACCEPT; iptables -A FORWARD -o %%i -j ACCEPT; iptables -t nat -A POSTROUTING -j MASQUERADE -s %s"
+	PostDown = "iptables -D FORWARD -i %%i -j ACCEPT; iptables -D FORWARD -o %%i -j ACCEPT; iptables -t nat -D POSTROUTING -s %s -j MASQUERADE"
 )
 
 type NodeManagerServer struct {
@@ -39,12 +48,16 @@ func NewNodeManagerServer(ctx context.Context, cfg NodeConfig, ipamClient ipamv1
 	}
 	cidr := fmt.Sprintf("%s/%s", alloc.Msg.GetAlloc().Address, alloc.Msg.GetAlloc().Netmask)
 	cfg.Wireguard.Route = cidr
+	postUpCmd := fmt.Sprintf(PostUp, cidr)
+	postUpVar.Set(postUpCmd)
+	postDownCmd := fmt.Sprintf(PostDown, cidr)
+	postDownVar.Set(postDownCmd)
 	wgCidrPrefix.Set(cidr)
 
 	// This is a shitty circular dependency I've created. We need the self for the server to include ourselves in the
 	// peers response but we also need the server to set our own configs, so now it's eventually consistent and I'm sad.
 	// We can refactor it but probably later
-	wgManager, err := wireguard.New(ctx, cfg.Wireguard, wireguardClient)
+	wgManager, err := wireguard.New(ctx, cfg.Wireguard, wireguardClient, wireguard.WithPost(postUpCmd, postDownCmd))
 	if err != nil {
 		return nil, fmt.Errorf("failed to start wireguard manager %w", err)
 	}
