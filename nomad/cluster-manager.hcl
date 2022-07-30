@@ -18,7 +18,7 @@ job "cluster-manager" {
 
             config {
                 network_mode = "host"
-                image = "wireguard-cni:local-1659155194"
+                image = "clly/wireguard-cni:v0.0.1"
                 args = ["cluster-manager"]
             }
         }
