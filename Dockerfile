@@ -4,7 +4,7 @@ WORKDIR /build
 COPY . ./
 RUN make build
 
-FROM ubuntu
+FROM ubuntu:focal
 
 WORKDIR /opt
 COPY --from=build /build/bin/cmd/ ./

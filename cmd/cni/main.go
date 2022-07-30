@@ -21,6 +21,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/containernetworking/cni/pkg/skel"
 	"github.com/containernetworking/cni/pkg/types"
@@ -119,7 +121,10 @@ func cmdAdd(args *skel.CmdArgs) error {
 	var device string
 	ctx := context.Background()
 	err = netns.Do(func(netns ns.NetNS) error {
-		device, err = addWgInterface(ctx, *conf, args.ContainerID, result, netns)
+		fmt.Fprintln(os.Stderr, "netns: ", args.Netns)
+		fmt.Fprintln(os.Stderr, "netns name: ", filepath.Base(args.Netns))
+		time.Sleep(1 * time.Second)
+		device, err = addWgInterface(ctx, *conf, filepath.Base(args.Netns), result, netns)
 
 		ip, iface, err := getResult(device, args.Netns)
 

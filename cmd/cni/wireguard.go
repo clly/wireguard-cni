@@ -35,6 +35,7 @@ func addWgInterface(ctx context.Context, cfg PluginConf, netnsContainer string, 
 
 		resp, err := ipamClient.Alloc(ctx, connect.NewRequest(&ipamv1.AllocRequest{}))
 		if err != nil {
+			fmt.Fprintln(os.Stderr, "failed to request alloc")
 			return err
 		}
 
@@ -42,7 +43,7 @@ func addWgInterface(ctx context.Context, cfg PluginConf, netnsContainer string, 
 		// log.Println("Using", ip, "as wireguard endpoint")
 		// log.Println("Using", addr, "as wireguard interface address")
 
-		fmt.Fprintf(os.Stderr, "%#v\n", nn.Path())
+		fmt.Fprintf(os.Stderr, "Namespace Path: %#v\n", nn.Path())
 
 		wgAddr := resp.Msg.Alloc.Address
 
@@ -52,24 +53,32 @@ func addWgInterface(ctx context.Context, cfg PluginConf, netnsContainer string, 
 			Address:   wgAddr,
 			Endpoint:  addr,
 			Route:     cidr,
-			Namespace: netnsContainer,
+			Namespace: nn.Path(),
 		}
 
+		netns.Path()
+
+		log.Printf("%#v\n", wgConf)
 		fmt.Fprintln(os.Stderr, wgConf)
 		wgMgr, err := wireguard.New(ctx, wgConf, wireguardClient, wireguard.WithOutput(os.Stderr))
 		if err != nil {
+			log.Println("failed to create wireguard manager")
 			return err
 		}
+		logger.Println("wireguard manager created")
 
 		device = fmt.Sprintf("wg%s", randomString())
 		readCl, err := openConfig(device)
 		if err != nil {
+			fmt.Fprintln(os.Stderr, "failed to open configuration file for interface", device)
 			return err
 		}
 		if err = wgMgr.Config(readCl); err != nil {
+			fmt.Fprintln(os.Stderr, "failed to write config")
 			return err
 		}
 
+		fmt.Fprintln(os.Stderr, "Bringing up device", device)
 		return wgMgr.Up(device)
 	})
 

@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
 	"os/exec"
 	"sort"
 	"strings"
@@ -19,9 +20,11 @@ import (
 func (w *WGQuickManager) Up(device string) error {
 	cmd := []string{}
 	if w.namespace != "" {
-		cmd = append(cmd, "ip", "netns", "exec", w.namespace)
+		//nsenter --net=/run/docker/netns/f1cffea8d447
+		cmd = append(cmd, "nsenter", fmt.Sprintf("--net=%s", w.namespace))
 	}
 	cmd = append(cmd, "wg-quick", "up", device)
+	fmt.Fprintln(os.Stderr, cmd)
 	return run(w.logOutput, cmd[0], cmd[1:]...)
 }
 
