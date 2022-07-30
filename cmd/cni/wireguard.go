@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"log"
 	"math/rand"
 	"net"
 	"os"
@@ -26,8 +28,13 @@ import (
 
 func addWgInterface(ctx context.Context, cfg PluginConf, netnsContainer string, result *current.Result, netns ns.NetNS) (string, error) {
 
+	f, err := ioutil.TempFile("/tmp", "wireguard")
+	if err != nil {
+		f.Close()
+	}
+
 	var device string
-	err := netns.Do(func(nn ns.NetNS) error {
+	err = netns.Do(func(nn ns.NetNS) error {
 		ip := result.IPs[0].Address.IP.String()
 
 		ipamClient := ipamv1connect.NewIPAMServiceClient(cleanhttp.DefaultClient(), cfg.NodeManagerAddr)
@@ -58,14 +65,12 @@ func addWgInterface(ctx context.Context, cfg PluginConf, netnsContainer string, 
 
 		netns.Path()
 
-		log.Printf("%#v\n", wgConf)
 		fmt.Fprintln(os.Stderr, wgConf)
 		wgMgr, err := wireguard.New(ctx, wgConf, wireguardClient, wireguard.WithOutput(os.Stderr))
 		if err != nil {
 			log.Println("failed to create wireguard manager")
 			return err
 		}
-		logger.Println("wireguard manager created")
 
 		device = fmt.Sprintf("wg%s", randomString())
 		readCl, err := openConfig(device)
