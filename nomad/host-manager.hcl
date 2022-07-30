@@ -11,14 +11,15 @@ job "node-manager" {
             }
             mode = "host"
         }
-        task "cluster-manager" {
+        task "node-manager" {
             driver = "docker"
 
             user = "root"
             config {
                 network_mode = "host"
-                cap_add = ["net_admin","sys_module"]
-                image = "wireguard-cni:local-1658981062"
+                privileged = true
+                cap_add = ["net_admin","sys_module","net_raw"] // net_admin, net_raw for iptables, sys_module for loading wireguard if necessary
+                image = "wireguard-cni:local-1659155194"
                 args = ["node-manager"]
             }
         }

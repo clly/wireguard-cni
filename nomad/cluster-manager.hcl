@@ -1,4 +1,4 @@
-job "cni-manager" {
+job "cluster-manager" {
     type = "service"
 
     datacenters = ["dc1"]
