@@ -17,8 +17,7 @@ job "node-manager" {
             user = "root"
             config {
                 network_mode = "host"
-                privileged = true
-                cap_add = ["net_admin","sys_module","net_raw"] // net_admin, net_raw for iptables, sys_module for loading wireguard if necessary
+                cap_add = ["net_admin","sys_module","net_raw"] // net_admin, net_raw for iptables, sys_module for loading wireguard if necessary.
                 image = "wireguard-cni:local-1659155194"
                 args = ["node-manager"]
             }

@@ -132,6 +132,8 @@ func cmdAdd(args *skel.CmdArgs) error {
 			return fmt.Errorf("failed to get result %w", err)
 		}
 
+		fmt.Fprintln(os.Stderr, "IP: ", ip)
+		fmt.Fprintln(os.Stderr, "Interface: ", iface)
 		ip.Interface = ptr(len(result.Interfaces))
 		result.Interfaces = append(result.Interfaces, &iface)
 		result.IPs = append(result.IPs, &ip)
@@ -141,8 +143,6 @@ func cmdAdd(args *skel.CmdArgs) error {
 	if err != nil {
 		return fmt.Errorf("failed to add interface %w", err)
 	}
-
-	_ = result.PrintTo(os.Stderr)
 
 	// START originating plugin code
 	// if conf.PrevResult != nil {

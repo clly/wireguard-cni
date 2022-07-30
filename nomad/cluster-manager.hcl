@@ -13,12 +13,13 @@ job "cluster-manager" {
             mode = "host"
         }
         task "cluster-manager" {
-            driver = "raw_exec"
+            driver = "docker"
 
 
             config {
-                command = "/home/connor/p/wireguard-cni/bin/cmd/cluster-manager"
-                args = ["--cidr-prefix","172.16.0.0/12"]
+                network_mode = "host"
+                image = "wireguard-cni:local-1659155194"
+                args = ["cluster-manager"]
             }
         }
     }
