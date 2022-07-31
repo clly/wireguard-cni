@@ -21,6 +21,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/containernetworking/cni/pkg/skel"
 	"github.com/containernetworking/cni/pkg/types"
@@ -119,7 +121,10 @@ func cmdAdd(args *skel.CmdArgs) error {
 	var device string
 	ctx := context.Background()
 	err = netns.Do(func(netns ns.NetNS) error {
-		device, err = addWgInterface(ctx, *conf, args.ContainerID, result, netns)
+		fmt.Fprintln(os.Stderr, "netns: ", args.Netns)
+		fmt.Fprintln(os.Stderr, "netns name: ", filepath.Base(args.Netns))
+		time.Sleep(1 * time.Second)
+		device, err = addWgInterface(ctx, *conf, filepath.Base(args.Netns), result, netns)
 
 		ip, iface, err := getResult(device, args.Netns)
 
@@ -127,6 +132,8 @@ func cmdAdd(args *skel.CmdArgs) error {
 			return fmt.Errorf("failed to get result %w", err)
 		}
 
+		fmt.Fprintln(os.Stderr, "IP: ", ip)
+		fmt.Fprintln(os.Stderr, "Interface: ", iface)
 		ip.Interface = ptr(len(result.Interfaces))
 		result.Interfaces = append(result.Interfaces, &iface)
 		result.IPs = append(result.IPs, &ip)
@@ -136,8 +143,6 @@ func cmdAdd(args *skel.CmdArgs) error {
 	if err != nil {
 		return fmt.Errorf("failed to add interface %w", err)
 	}
-
-	_ = result.PrintTo(os.Stderr)
 
 	// START originating plugin code
 	// if conf.PrevResult != nil {

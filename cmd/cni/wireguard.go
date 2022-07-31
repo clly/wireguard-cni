@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"log"
 	"math/rand"
 	"net"
 	"os"
@@ -26,8 +28,13 @@ import (
 
 func addWgInterface(ctx context.Context, cfg PluginConf, netnsContainer string, result *current.Result, netns ns.NetNS) (string, error) {
 
+	f, err := ioutil.TempFile("/tmp", "wireguard")
+	if err != nil {
+		f.Close()
+	}
+
 	var device string
-	err := netns.Do(func(nn ns.NetNS) error {
+	err = netns.Do(func(nn ns.NetNS) error {
 		ip := result.IPs[0].Address.IP.String()
 
 		ipamClient := ipamv1connect.NewIPAMServiceClient(cleanhttp.DefaultClient(), cfg.NodeManagerAddr)
@@ -35,6 +42,7 @@ func addWgInterface(ctx context.Context, cfg PluginConf, netnsContainer string, 
 
 		resp, err := ipamClient.Alloc(ctx, connect.NewRequest(&ipamv1.AllocRequest{}))
 		if err != nil {
+			fmt.Fprintln(os.Stderr, "failed to request alloc")
 			return err
 		}
 
@@ -42,7 +50,7 @@ func addWgInterface(ctx context.Context, cfg PluginConf, netnsContainer string, 
 		// log.Println("Using", ip, "as wireguard endpoint")
 		// log.Println("Using", addr, "as wireguard interface address")
 
-		fmt.Fprintf(os.Stderr, "%#v\n", nn.Path())
+		fmt.Fprintf(os.Stderr, "Namespace Path: %#v\n", nn.Path())
 
 		wgAddr := resp.Msg.Alloc.Address
 
@@ -52,24 +60,30 @@ func addWgInterface(ctx context.Context, cfg PluginConf, netnsContainer string, 
 			Address:   wgAddr,
 			Endpoint:  addr,
 			Route:     cidr,
-			Namespace: netnsContainer,
+			Namespace: nn.Path(),
 		}
+
+		netns.Path()
 
 		fmt.Fprintln(os.Stderr, wgConf)
 		wgMgr, err := wireguard.New(ctx, wgConf, wireguardClient, wireguard.WithOutput(os.Stderr))
 		if err != nil {
+			log.Println("failed to create wireguard manager")
 			return err
 		}
 
 		device = fmt.Sprintf("wg%s", randomString())
 		readCl, err := openConfig(device)
 		if err != nil {
+			fmt.Fprintln(os.Stderr, "failed to open configuration file for interface", device)
 			return err
 		}
 		if err = wgMgr.Config(readCl); err != nil {
+			fmt.Fprintln(os.Stderr, "failed to write config")
 			return err
 		}
 
+		fmt.Fprintln(os.Stderr, "Bringing up device", device)
 		return wgMgr.Up(device)
 	})
 
