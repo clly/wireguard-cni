@@ -9,7 +9,8 @@ wireguard-cni
 cmd/demo/pkey
 cmd/demo/demo
 
-# local binary dependencies
-.bin/*
+# Local binary dependencies
+.bin/**
 
+# Vendor
 vendor
