@@ -42,6 +42,15 @@ build: ## compile and build artifact
 		go build -o bin/$$i ./$$i; \
 	done
 
+.PHONY: docker/build
+docker/build: ## compile and build binaries in a docker contianer
+	@docker run --rm -it \
+	-v $$PWD:/app --workdir /app \
+	--user $$(id -u) \
+	-e GOCACHE=/tmp \
+	golang:1.18  make build
+
+
 .PHONY: build/cmd
 build/cmd:
 	go build ./cmd/...
