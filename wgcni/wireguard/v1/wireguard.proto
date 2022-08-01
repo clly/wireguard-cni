@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package wgcni.wireguard.v1;
 
-option go_package = "wireguard-cni/gen/wgcni/wireguard/v1;wireguardv1";
+option go_package = "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1;wireguardv1";
 
 service WireguardService {
   // Register will register a wireguard peer

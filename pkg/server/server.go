@@ -3,9 +3,9 @@ package server
 import (
 	"expvar"
 	"sync"
-	wireguardv1 "wireguard-cni/gen/wgcni/wireguard/v1"
 
 	"github.com/bufbuild/connect-go"
+	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
 	goipam "github.com/metal-stack/go-ipam"
 )
 

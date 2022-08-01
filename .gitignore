@@ -12,5 +12,8 @@ cmd/demo/demo
 # Local binary dependencies
 .bin/**
 
+# Local output binaries
+bin
+
 # Vendor
 vendor

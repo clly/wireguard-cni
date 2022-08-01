@@ -12,9 +12,9 @@ import (
 	"sort"
 	"strings"
 	"text/template"
-	wireguardv1 "wireguard-cni/gen/wgcni/wireguard/v1"
 
 	"github.com/bufbuild/connect-go"
+	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
 )
 
 func (w *WGQuickManager) Up(device string) error {

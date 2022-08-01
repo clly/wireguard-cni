@@ -8,14 +8,13 @@ import (
 	"log"
 	"path/filepath"
 
-	ipamv1 "wireguard-cni/gen/wgcni/ipam/v1"
-	"wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
-	wireguardv1 "wireguard-cni/gen/wgcni/wireguard/v1"
-	"wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
-	"wireguard-cni/pkg/server"
-	"wireguard-cni/pkg/wireguard"
-
 	"github.com/bufbuild/connect-go"
+	ipamv1 "github.com/clly/wireguard-cni/gen/wgcni/ipam/v1"
+	"github.com/clly/wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
+	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
+	"github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
+	"github.com/clly/wireguard-cni/pkg/server"
+	"github.com/clly/wireguard-cni/pkg/wireguard"
 )
 
 func init() {

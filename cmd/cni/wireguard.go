@@ -12,14 +12,13 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-	ipamv1 "wireguard-cni/gen/wgcni/ipam/v1"
-	"wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
-	"wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
-	"wireguard-cni/pkg/wireguard"
-
-	current "github.com/containernetworking/cni/pkg/types/100"
 
 	"github.com/bufbuild/connect-go"
+	ipamv1 "github.com/clly/wireguard-cni/gen/wgcni/ipam/v1"
+	"github.com/clly/wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
+	"github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
+	"github.com/clly/wireguard-cni/pkg/wireguard"
+	current "github.com/containernetworking/cni/pkg/types/100"
 	"github.com/containernetworking/plugins/pkg/ns"
 	"github.com/hashicorp/go-cleanhttp"
 )

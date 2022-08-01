@@ -10,10 +10,9 @@ import (
 	"os"
 	"os/signal"
 
-	"wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
-	"wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
-	"wireguard-cni/pkg/wireguard"
-
+	"github.com/clly/wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
+	"github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
+	"github.com/clly/wireguard-cni/pkg/wireguard"
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-sockaddr"
 	"golang.org/x/net/http2"
