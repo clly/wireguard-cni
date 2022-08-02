@@ -5,13 +5,13 @@ SHELL := bash
 .DEFAULT_GOAL := all
 APPNAME := "wireguard-cni"
 
-BUF_VERSION := 1.5.0
-BIN := .bin
-BUF := .bin/buf
-export DO_NOT_TRACK=1
+# Build dependencies go in here
+BIN=.bin
 
+# Respect $GOBIN if set in environment or via $GOENV file.
+GOBIN_DIR ?= $(shell go env GOBIN)
 BIN_DIR ?= $(shell go env GOPATH)/bin
-export PATH := ${CWD}/${BIN}:$(PATH):$(BIN_DIR)
+export PATH := ${CWD}/${BIN}:$(PATH):$(GOBIN_DIR):$(BIN_DIR)
 
 ifneq ("$(wildcard .makefiles/*.mk)","")
 	include .makefiles/*.mk
@@ -26,24 +26,18 @@ all: proto test build
 proto: $(BUF) buf/lint deps
 	@$(BUF) generate
 
-.PHONY: buf/install
-buf/install: ## installs buf
-	curl -sSL "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-$$(uname -s)-$$(uname -m)" \
-    -o "${BIN}/buf" && \
-  chmod +x "${BIN}/buf"
-
-$(BUF):
-	make buf/install
-
 .PHONY: buf/lint
-buf/lint: $(BUF)
+buf/lint: deps
 	@$(BUF) lint
 
 .PHONY: deps
-deps: ./.bin/protoc-gen-go ./.bin/protoc-gen-connect-go ## deps installs build time dependencies
+deps: ./.bin/buf ./.bin/protoc-gen-go ./.bin/protoc-gen-connect-go ## deps: installs build time dependencies
 
 .PHONY: extra-deps
-extra-deps: ./.bin/hc-install ./.bin/nomad ./.bin/vagrant ## extra deps installs helpful dependencies like nomad and vagrant
+extra-deps: ./.bin/hc-install ./.bin/nomad ./.bin/vagrant ## extra-deps: installs other tools like nomad and vagrant
+
+./.bin/buf:
+	GOBIN=${CWD}/${BIN} go install github.com/bufbuild/buf/cmd/buf@v1.5.0
 
 ./.bin/protoc-gen-go:
 	GOBIN=${CWD}/${BIN} go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28.0
