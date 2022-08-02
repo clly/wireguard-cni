@@ -51,7 +51,7 @@ make proto
 ```
 
 ## Running the project
-There are vagrant and nomad configuration available. Both binaries are installable using
+There are vagrant and nomad configuration available. Both binaries are installable using `make extra-deps`
 
 ## Components
 
