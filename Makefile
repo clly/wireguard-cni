@@ -7,6 +7,7 @@ APPNAME := "wireguard-cni"
 
 # Build dependencies go in here
 BIN=.bin
+BUF=./.bin/buf
 
 # Respect $GOBIN if set in environment or via $GOENV file.
 GOBIN_DIR ?= $(shell go env GOBIN)
