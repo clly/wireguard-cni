@@ -44,7 +44,7 @@ build: ## compile and build artifact
 
 .PHONY: docker/build
 docker/build: ## compile and build binaries in a docker contianer
-	@docker run --rm -it \
+	@docker run --rm \
 	-v $$PWD:/app --workdir /app \
 	--user $$(id -u) \
 	-e GOCACHE=/tmp \

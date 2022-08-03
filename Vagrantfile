@@ -88,6 +88,13 @@ Vagrant.configure("2") do |config|
   # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
   # documentation for more information about their specific syntax and use.
   config.vm.provision "shell", inline: <<-SHELL
-    apt-get update && apt-get install -y wireguard-tools jq containernetworking-plugins && apt-get upgrade -y
+    apt-get update && apt-get install -y wireguard-tools docker.io jq containernetworking-plugins make && apt-get upgrade -y
+    cd /tmp &&  wget https://go.dev/dl/go1.18.5.linux-amd64.tar.gz && tar -C /usr/local -xzf go1.18.5.linux-amd64.tar.gz
+    cd /vagrant
+    PATH=/usr/local/go/bin:$PATH make extra-deps docker/build
+    mkdir -p /opt/cni/config
+    ln -s /usr/lib/cni /opt/cni/bin
+    cp bin/cmd/cni /opt/cni/bin/wireguard
+    cp .wgnet.conflist /opt/cni/config/wgnet.conflist
   SHELL
 end
