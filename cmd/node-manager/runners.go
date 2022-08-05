@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/clly/wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
 	"github.com/clly/wireguard-cni/pkg/wireguard"
 )
 
@@ -49,6 +50,15 @@ func peerMgr(ctx context.Context, mgr wireguard.WireguardManager, cfgFile string
 			return ctx.Err()
 		}
 	}
+}
+
+// teardown waits for ctx to complete, then will de-allocate the allocation
+// that was given.
+func teardown(ctx context.Context, ipamClient ipamv1connect.IPAMServiceClient) error {
+	<-ctx.Done()
+	log.Println("tear-down initiated, will release this allocation")
+	_, err := ipamClient.DeAlloc(ctx, nil)
+	return err
 }
 
 func setConfig(mgr wireguard.WireguardManager, cfgFile string) error {

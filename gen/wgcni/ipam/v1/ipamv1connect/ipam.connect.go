@@ -27,8 +27,10 @@ const (
 
 // IPAMServiceClient is a client for the wgcni.ipam.v1.IPAMService service.
 type IPAMServiceClient interface {
-	// Alloc requests a IP address or subnet from the ipam server
+	// Alloc requests an IP address or subnet from the IPAM server.
 	Alloc(context.Context, *connect_go.Request[v1.AllocRequest]) (*connect_go.Response[v1.AllocResponse], error)
+	// DeAlloc releases an allocated IP address or subnet from the IPAM server.
+	DeAlloc(context.Context, *connect_go.Request[v1.DeAllocRequest]) (*connect_go.Response[v1.DeAllocResponse], error)
 }
 
 // NewIPAMServiceClient constructs a client for the wgcni.ipam.v1.IPAMService service. By default,
@@ -46,12 +48,18 @@ func NewIPAMServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts
 			baseURL+"/wgcni.ipam.v1.IPAMService/Alloc",
 			opts...,
 		),
+		deAlloc: connect_go.NewClient[v1.DeAllocRequest, v1.DeAllocResponse](
+			httpClient,
+			baseURL+"/wgcni.ipam.v1.IPAMService/DeAlloc",
+			opts...,
+		),
 	}
 }
 
 // iPAMServiceClient implements IPAMServiceClient.
 type iPAMServiceClient struct {
-	alloc *connect_go.Client[v1.AllocRequest, v1.AllocResponse]
+	alloc   *connect_go.Client[v1.AllocRequest, v1.AllocResponse]
+	deAlloc *connect_go.Client[v1.DeAllocRequest, v1.DeAllocResponse]
 }
 
 // Alloc calls wgcni.ipam.v1.IPAMService.Alloc.
@@ -59,10 +67,17 @@ func (c *iPAMServiceClient) Alloc(ctx context.Context, req *connect_go.Request[v
 	return c.alloc.CallUnary(ctx, req)
 }
 
+// DeAlloc calls wgcni.ipam.v1.IPAMService.DeAlloc.
+func (c *iPAMServiceClient) DeAlloc(ctx context.Context, req *connect_go.Request[v1.DeAllocRequest]) (*connect_go.Response[v1.DeAllocResponse], error) {
+	return c.deAlloc.CallUnary(ctx, req)
+}
+
 // IPAMServiceHandler is an implementation of the wgcni.ipam.v1.IPAMService service.
 type IPAMServiceHandler interface {
-	// Alloc requests a IP address or subnet from the ipam server
+	// Alloc requests an IP address or subnet from the IPAM server.
 	Alloc(context.Context, *connect_go.Request[v1.AllocRequest]) (*connect_go.Response[v1.AllocResponse], error)
+	// DeAlloc releases an allocated IP address or subnet from the IPAM server.
+	DeAlloc(context.Context, *connect_go.Request[v1.DeAllocRequest]) (*connect_go.Response[v1.DeAllocResponse], error)
 }
 
 // NewIPAMServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -77,6 +92,11 @@ func NewIPAMServiceHandler(svc IPAMServiceHandler, opts ...connect_go.HandlerOpt
 		svc.Alloc,
 		opts...,
 	))
+	mux.Handle("/wgcni.ipam.v1.IPAMService/DeAlloc", connect_go.NewUnaryHandler(
+		"/wgcni.ipam.v1.IPAMService/DeAlloc",
+		svc.DeAlloc,
+		opts...,
+	))
 	return "/wgcni.ipam.v1.IPAMService/", mux
 }
 
@@ -85,4 +105,8 @@ type UnimplementedIPAMServiceHandler struct{}
 
 func (UnimplementedIPAMServiceHandler) Alloc(context.Context, *connect_go.Request[v1.AllocRequest]) (*connect_go.Response[v1.AllocResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("wgcni.ipam.v1.IPAMService.Alloc is not implemented"))
+}
+
+func (UnimplementedIPAMServiceHandler) DeAlloc(context.Context, *connect_go.Request[v1.DeAllocRequest]) (*connect_go.Response[v1.DeAllocResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("wgcni.ipam.v1.IPAMService.DeAlloc is not implemented"))
 }

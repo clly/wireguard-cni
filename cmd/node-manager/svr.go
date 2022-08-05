@@ -45,6 +45,7 @@ func NewNodeManagerServer(ctx context.Context, cfg NodeConfig, ipamClient ipamv1
 	if err != nil {
 		return nil, err
 	}
+
 	cidr := fmt.Sprintf("%s/%s", alloc.Msg.GetAlloc().Address, alloc.Msg.GetAlloc().Netmask)
 	cfg.Wireguard.Route = cidr
 	postUpCmd := fmt.Sprintf(PostUp, cidr)
@@ -63,7 +64,7 @@ func NewNodeManagerServer(ctx context.Context, cfg NodeConfig, ipamClient ipamv1
 
 	wgSelf := wgManager.Self()
 
-	svr, err := server.NewServer(cidr, server.NODE_MODE, &wireguardv1.Peer{
+	svr, err := server.NewServer(cidr, server.NodeMode, &wireguardv1.Peer{
 		PublicKey: wgSelf.PublicKey,
 		Endpoint:  wgSelf.Endpoint,
 		Route:     wgSelf.AllowedIPs,
@@ -91,17 +92,25 @@ func NewNodeManagerServer(ctx context.Context, cfg NodeConfig, ipamClient ipamv1
 		return nil, err
 	}
 
-	peerCtx, cancel := context.WithCancel(ctx)
+	peerCtx, peerCancel := context.WithCancel(ctx)
 	go func() {
-		err = peerMgr(peerCtx, wgManager, configFile)
-		if !errors.Is(err, context.Canceled) {
-			panic(err)
-		}
+		cleanCancel(peerMgr(peerCtx, wgManager, configFile))
+	}()
+
+	deAllocCtx, deAllocCancel := context.WithCancel(ctx)
+	go func() {
+		cleanCancel(teardown(deAllocCtx, ipamClient))
 	}()
 
 	return &NodeManagerServer{
 		Server:    svr,
 		wgManager: wgManager,
-		cancelers: []context.CancelFunc{cancel},
+		cancelers: []context.CancelFunc{peerCancel, deAllocCancel},
 	}, nil
+}
+
+func cleanCancel(err error) {
+	if !errors.Is(err, context.Canceled) {
+		log.Fatalf("unexpected non-cancellation error on shutdown: %v", err)
+	}
 }

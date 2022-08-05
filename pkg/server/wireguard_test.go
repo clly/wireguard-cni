@@ -64,7 +64,7 @@ func Test_Register(t *testing.T) {
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {
 			r := require.New(t)
-			s, err := NewServer(defaultPrefix, CLUSTER_MODE, nil)
+			s, err := NewServer(defaultPrefix, ClusterMode, nil)
 			r.NoError(err)
 			expectedResponse := connect.NewResponse(testcase.resp)
 			req := connect.NewRequest(testcase.req)
@@ -111,7 +111,7 @@ func Test_Peers(t *testing.T) {
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {
 			r := require.New(t)
-			s, err := NewServer(defaultPrefix, CLUSTER_MODE, nil)
+			s, err := NewServer(defaultPrefix, ClusterMode, nil)
 			r.NoError(err)
 			m := newMapDB()
 			if testcase.peersFunc != nil {
@@ -201,7 +201,7 @@ func Test_PeersNodeMode(t *testing.T) {
 		t.Run(testcase.name, func(t *testing.T) {
 			r := require.New(t)
 			p := self()
-			s, err := NewServer(defaultPrefix, NODE_MODE, p)
+			s, err := NewServer(defaultPrefix, NodeMode, p)
 			r.NoError(err)
 			m := newMapDB()
 			if testcase.peersFunc != nil {

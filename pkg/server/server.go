@@ -14,7 +14,7 @@ type Server struct {
 	expvarMap *expvar.Map
 	prefix    *goipam.Prefix
 	ipam      goipam.Ipamer
-	mode      IPAM_MODE
+	mode      ModeIPAM
 	self      *wireguardv1.Peer
 }
 

@@ -11,20 +11,22 @@ import (
 	ipamv1 "github.com/clly/wireguard-cni/gen/wgcni/ipam/v1"
 	"github.com/clly/wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
 	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
+	"github.com/hashicorp/go-uuid"
 	goipam "github.com/metal-stack/go-ipam"
 )
 
+var _ ipamv1connect.IPAMServiceHandler = new(Server)
+
 var (
-	_               ipamv1connect.IPAMServiceHandler = &Server{}
-	wireguardExpvar                                  = new(expvar.Map).Init()
-	once                                             = &sync.Once{}
+	wireguardExpvar = new(expvar.Map).Init()
+	once            = new(sync.Once)
 )
 
-type IPAM_MODE int
+type ModeIPAM int
 
 const (
-	CLUSTER_MODE IPAM_MODE = iota
-	NODE_MODE
+	ClusterMode ModeIPAM = iota
+	NodeMode
 )
 
 func init() {
@@ -35,7 +37,7 @@ func (s *Server) IPAMServiceHandler() (string, http.Handler) {
 	return ipamv1connect.NewIPAMServiceHandler(s)
 }
 
-func NewServer(cidr string, ipamMode IPAM_MODE, self *wireguardv1.Peer) (*Server, error) {
+func NewServer(cidr string, ipamMode ModeIPAM, self *wireguardv1.Peer) (*Server, error) {
 	wireguardExpvar.Init()
 
 	ipam := goipam.New()
@@ -65,18 +67,29 @@ func ipamUsage(i goipam.Ipamer, cidrPrefix string) func() any {
 	}
 }
 
+func newUUID() string {
+	id, err := uuid.GenerateUUID()
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 func (s *Server) Alloc(
 	ctx context.Context,
 	req *connect.Request[ipamv1.AllocRequest],
 ) (*connect.Response[ipamv1.AllocResponse], error) {
 
+	id := newUUID() // todo, record this
+
 	alloc := &ipamv1.IPAlloc{
 		Netmask: "24",
 		Version: ipamv1.IPVersion_IP_VERSION_V4,
+		Id:      id,
 	}
 
 	switch s.mode {
-	case CLUSTER_MODE:
+	case ClusterMode:
 		prefix, err := s.ipam.AcquireChildPrefix(s.prefix.Cidr, 24)
 		if err != nil {
 			return nil, err
@@ -86,7 +99,7 @@ func (s *Server) Alloc(
 			return nil, err
 		}
 		alloc.Address = ip.String()
-	case NODE_MODE:
+	case NodeMode:
 		alloc.Netmask = "32"
 		ip, err := s.ipam.AcquireIP(s.prefix.Cidr)
 		if err != nil {
@@ -98,7 +111,13 @@ func (s *Server) Alloc(
 		Alloc: alloc,
 	}
 
-	log.Printf("Allocated new /%s CIDR %s\n", alloc.Netmask, alloc.Address)
+	log.Printf("Allocated new /%s CIDR: %s, ID: %s\n", alloc.Netmask, alloc.Address, alloc.Id)
+	return connect.NewResponse(response), nil
+}
 
+func (s *Server) DeAlloc(ctx context.Context, req *connect.Request[ipamv1.DeAllocRequest]) (*connect.Response[ipamv1.DeAllocResponse], error) {
+	id := req.Msg.Id
+	log.Printf("DeAlloc id: %s", id)
+	response := new(ipamv1.DeAllocResponse)
 	return connect.NewResponse(response), nil
 }

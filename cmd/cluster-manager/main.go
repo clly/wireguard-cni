@@ -19,7 +19,7 @@ var (
 )
 
 type ClusterManagerConfig struct {
-	ipamMode server.IPAM_MODE
+	ipamMode server.ModeIPAM
 	prefix   string
 }
 
@@ -51,7 +51,7 @@ func config() ClusterManagerConfig {
 	cidrPrefix := flag.String("cidr-prefix", "10.0.0.0/8", "Ipam CIDR prefix")
 	flag.Parse()
 	return ClusterManagerConfig{
-		ipamMode: server.CLUSTER_MODE,
+		ipamMode: server.ClusterMode,
 		prefix:   *cidrPrefix,
 	}
 }

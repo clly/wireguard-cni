@@ -18,13 +18,13 @@ import (
 )
 
 func (w *WGQuickManager) Up(device string) error {
-	cmd := []string{}
+	var cmd []string
 	if w.namespace != "" {
-		//nsenter --net=/run/docker/netns/f1cffea8d447
+		// nsenter --net=/run/docker/netns/f1cffea8d447
 		cmd = append(cmd, "nsenter", fmt.Sprintf("--net=%s", w.namespace))
 	}
 	cmd = append(cmd, "wg-quick", "up", device)
-	fmt.Fprintln(os.Stderr, cmd)
+	_, _ = fmt.Fprintln(os.Stderr, cmd)
 	return run(w.logOutput, cmd[0], cmd[1:]...)
 }
 
@@ -51,7 +51,7 @@ func run(w io.Writer, cmd string, args ...string) error {
 	output, err := shell(cmd, args...)
 	log.Println("run", fmt.Sprintf("[%s %s]", cmd, strings.Join(args, " ")))
 	if len(output) > 0 {
-		fmt.Fprintln(w, output)
+		_, _ = fmt.Fprintln(w, output)
 	}
 	return err
 }

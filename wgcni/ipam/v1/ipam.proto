@@ -5,8 +5,11 @@ package wgcni.ipam.v1;
 option go_package = "github.com/clly/wireguard-cni/gen/wgcni/ipam/v1;ipamv1";
 
 service IPAMService {
-  // Alloc requests a IP address or subnet from the ipam server
+  // Alloc requests an IP address or subnet from the IPAM server.
   rpc Alloc(AllocRequest) returns (AllocResponse) {}
+
+  // DeAlloc releases an allocated IP address or subnet from the IPAM server.
+  rpc DeAlloc(DeAllocRequest) returns (DeAllocResponse) {}
 }
 
 enum IPVersion {
@@ -18,13 +21,27 @@ enum IPVersion {
 message IPAlloc {
   // address is the IP address of the allocation (192.168.1.0, 192.168.3.5)
   string address = 1;
-  // netmask is the subnet mask in / notatation (/24, /32)
+
+  // netmask is the subnet mask in / notation (/24, /32)
   string netmask = 2;
+
+  // version is the requested IP version.
   IPVersion version = 3;
+
+  // id is a unique identifier associated with this IP allocation.
+  string id = 4;
 }
 
 message AllocRequest {}
 
 message AllocResponse {
+
   IPAlloc alloc = 1;
 }
+
+message DeAllocRequest {
+  // id is the unique identifier of the allocation to remove.
+  string id = 1;
+}
+
+message DeAllocResponse {}
