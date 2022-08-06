@@ -6,11 +6,11 @@ import (
 	"log"
 	"net/http"
 	"sync"
-	ipamv1 "wireguard-cni/gen/wgcni/ipam/v1"
-	"wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
-	wireguardv1 "wireguard-cni/gen/wgcni/wireguard/v1"
 
 	"github.com/bufbuild/connect-go"
+	ipamv1 "github.com/clly/wireguard-cni/gen/wgcni/ipam/v1"
+	"github.com/clly/wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
+	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
 	goipam "github.com/metal-stack/go-ipam"
 )
 

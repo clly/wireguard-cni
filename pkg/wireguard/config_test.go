@@ -3,9 +3,9 @@ package wireguard
 import (
 	"context"
 	"testing"
-	wireguardv1 "wireguard-cni/gen/wgcni/wireguard/v1"
-	"wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
 
+	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
+	"github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )

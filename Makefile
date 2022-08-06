@@ -24,12 +24,12 @@ endif
 all: proto test build
 
 .PHONY: proto
-proto: $(BUF) buf/lint deps
-	@$(BUF) generate
+proto: buf/lint deps
+	@$(BIN)/buf generate
 
 .PHONY: buf/lint
 buf/lint: deps
-	@$(BUF) lint
+	@$(BIN)/buf lint
 
 .PHONY: deps
 deps: ./.bin/buf ./.bin/protoc-gen-go ./.bin/protoc-gen-connect-go ## deps: installs build time dependencies

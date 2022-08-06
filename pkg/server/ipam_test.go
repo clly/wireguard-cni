@@ -3,9 +3,9 @@ package server
 import (
 	"context"
 	"testing"
-	ipamv1 "wireguard-cni/gen/wgcni/ipam/v1"
 
 	"github.com/bufbuild/connect-go"
+	ipamv1 "github.com/clly/wireguard-cni/gen/wgcni/ipam/v1"
 	"github.com/stretchr/testify/require"
 )
 

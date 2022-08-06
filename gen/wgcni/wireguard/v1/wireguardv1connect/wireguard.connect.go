@@ -8,9 +8,9 @@ import (
 	context "context"
 	errors "errors"
 	connect_go "github.com/bufbuild/connect-go"
+	v1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
 	http "net/http"
 	strings "strings"
-	v1 "wireguard-cni/gen/wgcni/wireguard/v1"
 )
 
 // This is a compile-time assertion to ensure that this generated file and the connect package are

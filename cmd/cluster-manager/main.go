@@ -5,10 +5,10 @@ import (
 	"flag"
 	"log"
 	"net/http"
-	"wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
-	"wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
-	"wireguard-cni/pkg/server"
 
+	"github.com/clly/wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
+	"github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
+	"github.com/clly/wireguard-cni/pkg/server"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )

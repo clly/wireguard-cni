@@ -1,4 +1,4 @@
-module wireguard-cni
+module github.com/clly/wireguard-cni
 
 go 1.18
 

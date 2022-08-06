@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"wireguard-cni/pkg/wireguard"
+	"github.com/clly/wireguard-cni/pkg/wireguard"
 )
 
 // peerMgr will set wireguard configuration file and periodically call SetPeers which will call wg-quick down &&

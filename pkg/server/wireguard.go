@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	wireguardv1 "wireguard-cni/gen/wgcni/wireguard/v1"
-	"wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
 
 	"github.com/bufbuild/connect-go"
+	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
+	"github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"google.golang.org/protobuf/encoding/protojson"
 )
