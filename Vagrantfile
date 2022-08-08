@@ -27,6 +27,7 @@ Vagrant.configure("2") do |config|
     peer.vm.box = "wg-peer"
     peer.vm.hostname = "wg-peer"
     peer.vm.network "private_network", ip: "192.168.56.10"
+    peer.vm.network "forwarded_port", guest: 4646, host: 14646, host_ip: "127.0.0.1"
   end
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -42,7 +43,7 @@ Vagrant.configure("2") do |config|
   # Create a forwarded port mapping which allows access to a specific port
   # within the machine from a port on the host machine and only allow access
   # via 127.0.0.1 to disable public access
-  # config.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
+
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
@@ -96,5 +97,6 @@ Vagrant.configure("2") do |config|
     ln -s /usr/lib/cni /opt/cni/bin
     cp bin/cmd/cni /opt/cni/bin/wireguard
     cp .wgnet.conflist /opt/cni/config/wgnet.conflist
+    cp .bin/nomad /usr/local/bin
   SHELL
 end
