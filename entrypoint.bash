@@ -3,11 +3,12 @@
 set -euo pipefail
 
 bin=/opt/$1
+shift
 
 if [[ -f $bin ]]; then
     echo "Starting $bin" >&2
     echo "whoami: $(whoami)"
-    exec $bin
+    exec $bin $@
 fi
 
 echo "failed to start ${bin}"
