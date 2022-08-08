@@ -134,8 +134,14 @@ func cmdAdd(args *skel.CmdArgs) error {
 
 		fmt.Fprintln(os.Stderr, "IP: ", ip)
 		fmt.Fprintln(os.Stderr, "Interface: ", iface)
-		ip.Interface = ptr(len(result.Interfaces))
-		result.Interfaces = append(result.Interfaces, &iface)
+		ip.Interface = ptr(0)
+		ifaces := make([]*current.Interface, len(result.Interfaces)+1)
+		ifaces[0] = &iface
+		// reorder our interfaces
+		for i, iface := range result.Interfaces {
+			ifaces[i+1] = iface
+		}
+		result.Interfaces = ifaces
 		result.IPs = append(result.IPs, &ip)
 
 		return err
