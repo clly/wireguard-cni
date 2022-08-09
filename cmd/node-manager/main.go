@@ -61,6 +61,8 @@ type NodeConfig struct {
 	Wireguard          wireguard.Config
 }
 
+const clusterMgrEnvKey = "CLUSTER_MANAGER_ADDR"
+
 func config() NodeConfig {
 	ip, err := sockaddr.GetPrivateIP()
 	addr := net.JoinHostPort(ip, "51820")
@@ -76,8 +78,10 @@ func config() NodeConfig {
 
 	flag.Parse()
 
+	clusterMgr := os.ExpandEnv(valOrEnv(*clusterMgrAddr, clusterMgrEnvKey))
+
 	return NodeConfig{
-		ClusterManagerAddr: *clusterMgrAddr,
+		ClusterManagerAddr: clusterMgr,
 		ConfigDirectory:    *configDirectory,
 		InterfaceName:      *interfaceName,
 		ListenAddr:         *listenAddr,
@@ -85,6 +89,13 @@ func config() NodeConfig {
 			Endpoint: *wireguardEndpoint,
 		},
 	}
+}
+
+func valOrEnv(v string, env string) string {
+	if v != "" {
+		return v
+	}
+	return os.Getenv(env)
 }
 
 func quit(mgr *NodeManagerServer, device string) {

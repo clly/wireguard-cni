@@ -5,6 +5,9 @@ plugin "docker" {
   }
 }
 
+bind_addr = "0.0.0.0"
+
 client {
     cni_config_dir = "/opt/cni/config"
+    network_interface = "{{ GetDefaultInterfaces | limit 1 | attr \"name\" }}"
 }

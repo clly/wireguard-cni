@@ -41,7 +41,7 @@ func addWgInterface(ctx context.Context, cfg PluginConf, netnsContainer string, 
 
 		resp, err := ipamClient.Alloc(ctx, connect.NewRequest(&ipamv1.AllocRequest{}))
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "failed to request alloc")
+			fmt.Fprintln(os.Stderr, "failed to request alloc", err)
 			return err
 		}
 

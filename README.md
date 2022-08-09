@@ -10,6 +10,12 @@ make help
 
 ## Quick Start
 
+### Using Vagrant
+Install dependencies and start vagrant
+```
+make extra-deps && .bin/vagrant up
+```
+
 Install dependencies
 ```
 # install wireguard-tools package for your OS
