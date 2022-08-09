@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"expvar"
 	"flag"
 	"log"
@@ -23,6 +24,12 @@ func main() {
 	ctx := context.Background()
 	log.Println("initializing node-manager")
 	cfg := config()
+
+	b, err := json.MarshalIndent(cfg, "==>", "  ")
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println(string(b))
 
 	ipamClient := ipamv1connect.NewIPAMServiceClient(cleanhttp.DefaultClient(), cfg.ClusterManagerAddr)
 	wireguardClient := wireguardv1connect.NewWireguardServiceClient(cleanhttp.DefaultClient(), cfg.ClusterManagerAddr)
@@ -62,6 +69,7 @@ type NodeConfig struct {
 }
 
 const clusterMgrEnvKey = "CLUSTER_MANAGER_ADDR"
+const clusterMgrDefault = "http://localhost:8080"
 
 func config() NodeConfig {
 	ip, err := sockaddr.GetPrivateIP()
@@ -70,7 +78,7 @@ func config() NodeConfig {
 		log.Println("failed to discover default address")
 		addr = ""
 	}
-	clusterMgrAddr := flag.String("cluster-manager-url", "http://localhost:8080", "CNI Cluster Manager address")
+	clusterMgrAddr := flag.String("cluster-manager-url", "", "CNI Cluster Manager address")
 	wireguardEndpoint := flag.String("wireguard-endpoint", addr, "endpoint:port for the wireguard socket")
 	interfaceName := flag.String("wireguard-interface", "wg0", "wireguard interface name")
 	configDirectory := flag.String("wireguard-config-directory", "/etc/wireguard", "Wireguard configuration directory")
@@ -78,7 +86,7 @@ func config() NodeConfig {
 
 	flag.Parse()
 
-	clusterMgr := os.ExpandEnv(valOrEnv(*clusterMgrAddr, clusterMgrEnvKey))
+	clusterMgr := os.ExpandEnv(valOrEnv(*clusterMgrAddr, clusterMgrEnvKey, clusterMgrDefault))
 
 	return NodeConfig{
 		ClusterManagerAddr: clusterMgr,
@@ -91,11 +99,14 @@ func config() NodeConfig {
 	}
 }
 
-func valOrEnv(v string, env string) string {
+func valOrEnv(v, env, defaultVal string) string {
 	if v != "" {
 		return v
 	}
-	return os.Getenv(env)
+	if e := os.Getenv(env); e != "" {
+		return e
+	}
+	return defaultVal
 }
 
 func quit(mgr *NodeManagerServer, device string) {

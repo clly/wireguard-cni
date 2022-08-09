@@ -3,7 +3,7 @@ job "sleep" {
     datacenters = ["dc1"]
 
     group "sleep" {
-        count = 1
+        count = 4
 
         network {
             mode = "cni/wgnet"
@@ -19,6 +19,9 @@ job "sleep" {
         }
         task "sleep" {
             driver = "docker"
+            resources {
+                memory = 10
+            }
             config {
                 image = "clly/debug"
                 cap_add = ["net_raw"] // for pings

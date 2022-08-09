@@ -21,13 +21,13 @@ Vagrant.configure("2") do |config|
     server.vm.box = "wg-server"
     server.vm.hostname = "wg-server"
     server.vm.network "private_network", ip: "192.168.56.11"
+    server.vm.network "forwarded_port", guest: 4646, host: 14646, host_ip: "127.0.0.1"
   end
 
   config.vm.define "peer" do |peer|
     peer.vm.box = "wg-peer"
     peer.vm.hostname = "wg-peer"
     peer.vm.network "private_network", ip: "192.168.56.10"
-    peer.vm.network "forwarded_port", guest: 4646, host: 14646, host_ip: "127.0.0.1"
   end
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -94,9 +94,20 @@ Vagrant.configure("2") do |config|
     cd /vagrant
     PATH=/usr/local/go/bin:$PATH make extra-deps docker/build
     mkdir -p /opt/cni/config
-    ln -s /usr/lib/cni /opt/cni/bin
+    ln -s /usr/lib/cni /opt/cni/bin && true
     cp bin/cmd/cni /opt/cni/bin/wireguard
     cp .wgnet.conflist /opt/cni/config/wgnet.conflist
     cp .bin/nomad /usr/local/bin
+    mkdir -p /etc/nomad.d
+    cp .nomad.hcl /etc/nomad.d/nomad.hcl
+    cp config/nomad-systemd.service /etc/systemd/system/nomad.service
+
+    chmod +x /usr/local/bin/nomad
+    if [[ $(hostnamectl --static) == "wg-peer" ]]; then
+      cp config/client.hcl /etc/nomad.d/
+      cat config/nomad-systemd.service | sed "s/-dev//" > /etc/systemd/system/nomad.service
+    fi
+
+    systemctl daemon-reload && systemctl start nomad
   SHELL
 end
