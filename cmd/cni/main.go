@@ -137,10 +137,8 @@ func cmdAdd(args *skel.CmdArgs) error {
 		ip.Interface = ptr(0)
 		ifaces := make([]*current.Interface, len(result.Interfaces)+1)
 		ifaces[0] = &iface
-		// reorder our interfaces
-		for i, iface := range result.Interfaces {
-			ifaces[i+1] = iface
-		}
+		// append our interfaces to the new slice
+		copy(ifaces[1:], result.Interfaces)
 		result.Interfaces = ifaces
 		result.IPs = append(result.IPs, &ip)
 

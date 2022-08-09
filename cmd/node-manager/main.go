@@ -96,10 +96,7 @@ func valOrEnv(v string, env string) string {
 	if v != "" {
 		return v
 	}
-	if v = os.Getenv(env); v != "" {
-		return v
-	}
-	return ""
+	return os.Getenv(env)
 }
 
 func quit(mgr *NodeManagerServer, device string) {
