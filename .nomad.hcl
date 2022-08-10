@@ -7,7 +7,12 @@ plugin "docker" {
 
 bind_addr = "0.0.0.0"
 
+advertise {
+  rpc = "{{ GetPrivateInterfaces | include \"network\" \"192.168.56.0/24\" | attr \"address\" }}"
+  serf = "{{ GetPrivateInterfaces | include \"network\" \"192.168.56.0/24\" | attr \"address\" }}"
+}
+
 client {
     cni_config_dir = "/opt/cni/config"
-    network_interface = "{{ GetDefaultInterfaces | limit 1 | attr \"name\" }}"
+    network_interface = "{{ GetPrivateInterfaces | include \"network\" \"192.168.56.0/24\" | attr \"name\" }}"
 }

@@ -23,7 +23,7 @@ job "cluster-manager" {
 
             config {
                 network_mode = "host"
-                image = "clly/wireguard-cni:v0.0.2"
+                image = "clly/wireguard-cni:v0.0.3"
                 args = ["cluster-manager","-cidr-prefix","172.16.0.0/12"]
             }
         }
