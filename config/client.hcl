@@ -1,4 +1,4 @@
-data_dir = "/var/run/nomad"
+data_dir = "/opt/nomad"
 client {
     enabled = true
     server_join {
