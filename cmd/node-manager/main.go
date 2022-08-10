@@ -86,7 +86,8 @@ func config() NodeConfig {
 
 	flag.Parse()
 
-	clusterMgr := os.ExpandEnv(valOrEnv(*clusterMgrAddr, clusterMgrEnvKey, clusterMgrDefault))
+	// later we can use flag.Visit to see if the clusterMgrAddr was visited
+	clusterMgr := os.ExpandEnv(first(*clusterMgrAddr, clusterMgrEnvKey, clusterMgrDefault))
 
 	return NodeConfig{
 		ClusterManagerAddr: clusterMgr,
@@ -99,14 +100,13 @@ func config() NodeConfig {
 	}
 }
 
-func valOrEnv(v, env, defaultVal string) string {
-	if v != "" {
-		return v
+func first(s ...string) string {
+	for _, v := range s {
+		if v != "" {
+			return v
+		}
 	}
-	if e := os.Getenv(env); e != "" {
-		return e
-	}
-	return defaultVal
+	return ""
 }
 
 func quit(mgr *NodeManagerServer, device string) {

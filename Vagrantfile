@@ -94,7 +94,7 @@ Vagrant.configure("2") do |config|
     cd /vagrant
     PATH=/usr/local/go/bin:$PATH make extra-deps docker/build
     mkdir -p /opt/cni/config
-    ln -s /usr/lib/cni /opt/cni/bin && true
+    ln -s /usr/lib/cni /opt/cni/bin
     cp bin/cmd/cni /opt/cni/bin/wireguard
     cp .wgnet.conflist /opt/cni/config/wgnet.conflist
     cp .bin/nomad /usr/local/bin
