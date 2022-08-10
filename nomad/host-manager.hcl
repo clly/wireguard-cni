@@ -21,7 +21,9 @@ job "node-manager" {
                 image = "clly/wireguard-cni:v0.0.3"
                 args = ["node-manager",""]
             }
-
+            resources {
+                memory = 50
+            }
 
             template {
                 data = <<EOL
