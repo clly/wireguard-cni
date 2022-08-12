@@ -12,7 +12,7 @@ Vagrant.configure("2") do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
-  config.env.enable # enable .env support plugin (it will let us easily enable cloud_init support)
+  #config.env.enable # enable .env support plugin (it will let us easily enable cloud_init support)
 
   # URL used as a source for the vm.box defined above
   config.vm.box_url = "https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64-vagrant.box"
