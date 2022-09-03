@@ -22,9 +22,9 @@ Install dependencies
 ## install dependencies
 make deps && make extra-deps && ./.bin/nomad &
 ## Run jobs in nomad
-nomad run nomad/cluster-manager.hcl
-nomad run nomad/node-manager.hcl
-nomad run nomad/sleep.hcl
+./.bin/nomad run nomad/cluster-manager.hcl
+./.bin/nomad run nomad/node-manager.hcl
+./.bin/nomad run nomad/sleep.hcl
 ## see that wireguard is running
 sudo wg
 ## kill and cleanup nomad
