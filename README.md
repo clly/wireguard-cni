@@ -13,7 +13,7 @@ make help
 ### Using Vagrant
 Install dependencies and start vagrant
 ```
-make extra-deps && .bin/zvagrant up
+make extra-deps && .bin/vagrant up
 ```
 
 Install dependencies
