@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/bufbuild/connect-go v0.1.0
-	github.com/containernetworking/cni v1.1.0
+	github.com/containernetworking/cni v1.1.2
 	github.com/containernetworking/plugins v1.1.1
 	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
 	github.com/hashicorp/go-cleanhttp v0.5.2
