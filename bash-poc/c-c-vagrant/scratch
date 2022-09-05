@@ -1,0 +1,5 @@
+host    subnet  address privatekey pubkey  
+server-wg0  10.0.10.0/24 10.0.10.1 CH9Z7veOrPfbKP9anOLEmKDs8PVhWtOtADLSBIktHH8= v2XPnF7Yk7KEugBRVyCdD6mssm2Tsc4edDUApwzFoBk=
+peer-wg0 10.0.0.0/24 10.0.0.1 sLIO8JBk7bOnSVPVlBIYht9fw3w61ZazKNIW9B5CDlw= WzEKDzUqj4XKiyNwCjWYCuFTHCTZxQGjumj/v+Iytxg=
+container-server 10.0.10.0/24 10.0.10.3 iBDdm9fXmcy+wAl26Ef6zZcnc0Q01oGi8KIVQoYtAFg= X7qQfHNDtiUS5+qg2H5T25IwhcWdVbyoFjGEDTFJ1WU=
+container-peer 10.0.0.0/24 10.0.0.3 EK1DWZkUjrXjQJUnWsbgI5WnOOEWVJDRKBCBNKX3yXI= j6Dgd8syAcNM/Uu4yGR/1t+dBbDos7utcjzBcXiZIQc=

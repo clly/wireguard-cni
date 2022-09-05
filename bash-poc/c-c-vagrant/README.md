@@ -39,6 +39,46 @@ We can not use wg-quick with this model because it creates, configures and
 brings up the interface at the same time. Once the interface is live it 
 cannot be moved from one namespace to another.
 
+## Convergence notes
+
+### When are endpoints required
+While being lazy during setup I've discovered configuring actual dialing and 
+routing does _not seem_ to be required. After one party performs any request 
+against any other party in the mesh that is properly configured as a peer. The 
+peer can then respond back over the wireguard tunnel. Only one side 
+_requires_ an endpoint which feels like it allows a level of control and 
+protection around which clients can start a connection. Unsure if those ever 
+expire.
+
+This was confirmed with tcpdump to ensure that packets were not passing 
+through the host accidentally. If the route didn't exist would the host pass 
+traffic? If the peer exists and the route doesn't it appears that traffic 
+won't pass?
+
+### Hosts can still pass traffic but require a route
+
+When a subnet is configured in AllowedIPs and a route is configured and IP 
+forwarding is configured, the peer will still pass traffic between nodes. As 
+long as we configure routes properly on Hosts first new network namespaces 
+should be able to communicate between other network namespaces quickly.
+
+This was confirmed using traceroute.
+
+### iptables changes
+
+A minor iptables change _was_ required to ensure that we don't NAT traffic 
+intended for containers. If a container starts the request then the host can 
+pass traffic back to the container. Why didn't we find this out earlier? 
+Unknown. Maybe I started the request from inside the container so things 
+just sort of worked or traffic could more easily get passed into the 
+container because of the connection from the bridge to the host-local IP 
+address for the wireguard dial.
+
+### When will a container pass traffic using a host.
+When fully configured a container will _not_ attempt to pass traffic through 
+it's host unless it does not have an AllowedIPs for the address set on the 
+interface. 
+
 ## Testing 
 * open two terminals
 * `vagrant ssh peer` and `vagrant ssh server`
