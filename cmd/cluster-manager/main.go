@@ -6,11 +6,12 @@ import (
 	"log"
 	"net/http"
 
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
+
 	"github.com/clly/wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
 	"github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
 	"github.com/clly/wireguard-cni/pkg/server"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 )
 
 var (
@@ -19,15 +20,14 @@ var (
 )
 
 type ClusterManagerConfig struct {
-	ipamMode server.IPAM_MODE
-	prefix   string
+	prefix string
 }
 
 func main() {
 	log.Println("initializing cluster-manager")
 	c := config()
 	log.Println("initializing server")
-	s, err := server.NewServer(c.prefix, c.ipamMode, nil)
+	s, err := server.NewServer(c.prefix)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -51,7 +51,6 @@ func config() ClusterManagerConfig {
 	cidrPrefix := flag.String("cidr-prefix", "10.0.0.0/8", "Ipam CIDR prefix")
 	flag.Parse()
 	return ClusterManagerConfig{
-		ipamMode: server.CLUSTER_MODE,
-		prefix:   *cidrPrefix,
+		prefix: *cidrPrefix,
 	}
 }

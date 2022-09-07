@@ -17,7 +17,21 @@ type Server struct {
 	mode      IPAM_MODE
 }
 
-func NewServer(cidr string, ipamMode IPAM_MODE, w *WireguardServerConfig) (*Server, error) {
+type serverConfig struct {
+	mode IPAM_MODE
+	self *wireguardv1.Peer
+}
+
+type newServerOpt func(cfg *serverConfig)
+
+func WithNodeConfig(self *wireguardv1.Peer) newServerOpt {
+	return func(cfg *serverConfig) {
+		cfg.mode = NODE_MODE
+		cfg.self = self
+	}
+}
+
+func NewServer(cidr string, opt ...newServerOpt) (*Server, error) {
 	wireguardExpvar.Init()
 
 	ipam := goipam.New()
@@ -38,19 +52,26 @@ func NewServer(cidr string, ipamMode IPAM_MODE, w *WireguardServerConfig) (*Serv
 		return nil, err
 	}
 
+	var cfg = serverConfig{
+		mode: CLUSTER_MODE,
+	}
+	for _, o := range opt {
+		o(&cfg)
+	}
+
 	svr := &Server{
 		wgKey:     m,
 		expvarMap: wireguardExpvar,
 		prefix:    prefix,
-		mode:      ipamMode,
+		mode:      cfg.mode,
 		ipam:      ipam,
 	}
 
-	if w.Self != nil {
-		if err = svr.registerWGKey(w.Self.PublicKey, &wireguardv1.RegisterRequest{
-			PublicKey: w.Self.GetPublicKey(),
-			Endpoint:  w.Self.Endpoint,
-			Route:     w.Self.Route,
+	if cfg.self != nil {
+		if err = svr.registerWGKey(cfg.self.PublicKey, &wireguardv1.RegisterRequest{
+			PublicKey: cfg.self.GetPublicKey(),
+			Endpoint:  cfg.self.Endpoint,
+			Route:     cfg.self.Route,
 		}); err != nil {
 			return nil, err
 		}

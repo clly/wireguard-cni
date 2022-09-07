@@ -17,10 +17,6 @@ var (
 	_ wireguardv1connect.WireguardServiceHandler = &Server{}
 )
 
-type WireguardServerConfig struct {
-	Self *wireguardv1.Peer
-}
-
 func (s *Server) ListPeers() ([]*wireguardv1.Peer, error) {
 	keyList := s.wgKey.List()
 	peers := make([]*wireguardv1.Peer, 0, len(keyList))

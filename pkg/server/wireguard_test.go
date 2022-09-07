@@ -67,9 +67,7 @@ func Test_Register(t *testing.T) {
 			// d := t.TempDir()
 			r := require.New(t)
 			// jsonFile := filepath.Join(d, "wireguard.json")
-			s, err := NewServer(defaultPrefix, CLUSTER_MODE, &WireguardServerConfig{
-				// JSONOutputFile: jsonFile,
-			})
+			s, err := NewServer(defaultPrefix)
 
 			r.NoError(err)
 			expectedResponse := connect.NewResponse(testcase.resp)
@@ -121,7 +119,7 @@ func Test_Peers(t *testing.T) {
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {
 			r := require.New(t)
-			s, err := NewServer(defaultPrefix, CLUSTER_MODE, &WireguardServerConfig{})
+			s, err := NewServer(defaultPrefix)
 			r.NoError(err)
 			m, err := newMapDB()
 			r.NoError(err)
@@ -212,7 +210,7 @@ func Test_PeersNodeMode(t *testing.T) {
 		t.Run(testcase.name, func(t *testing.T) {
 			r := require.New(t)
 			p := self()
-			s, err := NewServer(defaultPrefix, NODE_MODE, &WireguardServerConfig{Self: p})
+			s, err := NewServer(defaultPrefix, WithNodeConfig(p))
 			r.NoError(err)
 
 			m, err := newMapDB()

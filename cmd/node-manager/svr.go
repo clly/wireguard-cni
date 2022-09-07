@@ -75,13 +75,13 @@ func NewNodeManagerServer(ctx context.Context, cfg NodeConfig) (*NodeManagerServ
 
 	wgSelf := wgManager.Self()
 
-	w := &server.WireguardServerConfig{Self: &wireguardv1.Peer{
+	self := &wireguardv1.Peer{
 		PublicKey: wgSelf.PublicKey,
 		Endpoint:  wgSelf.Endpoint,
 		Route:     wgSelf.AllowedIPs,
-	}}
+	}
 
-	svr, err := server.NewServer(cidr, server.NODE_MODE, w)
+	svr, err := server.NewServer(cidr, server.WithNodeConfig(self))
 	if err != nil {
 		return nil, err
 	}
