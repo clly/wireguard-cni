@@ -31,7 +31,7 @@ func Test_Alloc(t *testing.T) {
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {
 			r := require.New(t)
-			s, err := NewServer("10.0.0.0/8", CLUSTER_MODE, nil)
+			s, err := NewServer("10.0.0.0/8", CLUSTER_MODE, &WireguardServerConfig{})
 			r.NoError(err)
 			expectedResponse := connect.NewResponse(testcase.resp)
 			req := connect.NewRequest(testcase.req)

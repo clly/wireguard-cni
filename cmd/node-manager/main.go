@@ -11,13 +11,12 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/clly/wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
-	"github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
-	"github.com/clly/wireguard-cni/pkg/wireguard"
-	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-sockaddr"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
+
+	"github.com/clly/wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
+	"github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
 )
 
 func main() {
@@ -31,12 +30,9 @@ func main() {
 	}
 	log.Println(string(b))
 
-	ipamClient := ipamv1connect.NewIPAMServiceClient(cleanhttp.DefaultClient(), cfg.ClusterManagerAddr)
-	wireguardClient := wireguardv1connect.NewWireguardServiceClient(cleanhttp.DefaultClient(), cfg.ClusterManagerAddr)
-
 	log.Println("initializing server")
 	log.Println("initializing client ipam cidr")
-	svr, err := NewNodeManagerServer(ctx, cfg, ipamClient, wireguardClient)
+	svr, err := NewNodeManagerServer(ctx, cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -65,7 +61,13 @@ type NodeConfig struct {
 	InterfaceName      string
 	ConfigDirectory    string
 	ListenAddr         string
-	Wireguard          wireguard.Config
+	Wireguard          WireguardNodeConfig
+}
+
+// WireguardNodeConfig contains all the information that gets fed into the wireguard manager at some point
+type WireguardNodeConfig struct {
+	Endpoint      string
+	InterfaceName string
 }
 
 const clusterMgrEnvKey = "CLUSTER_MANAGER_ADDR"
@@ -92,10 +94,10 @@ func config() NodeConfig {
 	return NodeConfig{
 		ClusterManagerAddr: clusterMgr,
 		ConfigDirectory:    *configDirectory,
-		InterfaceName:      *interfaceName,
 		ListenAddr:         *listenAddr,
-		Wireguard: wireguard.Config{
-			Endpoint: *wireguardEndpoint,
+		Wireguard: WireguardNodeConfig{
+			Endpoint:      *wireguardEndpoint,
+			InterfaceName: *interfaceName,
 		},
 	}
 }

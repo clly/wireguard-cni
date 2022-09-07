@@ -33,7 +33,7 @@ lint: lint/check ## run golangci-lint
 
 .PHONY: test
 test: lint ## run go tests
-	go test ./... -race
+	go test ./... -race -timeout 1m
 
 .PHONY: build
 build: ## compile and build artifact
