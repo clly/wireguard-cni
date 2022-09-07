@@ -82,10 +82,6 @@ func (s *Server) Peers(ctx context.Context,
 		return nil, err
 	}
 
-	if s.self != nil {
-		peers = append(peers, s.self)
-	}
-
 	sort.SliceStable(peers, func(i, j int) bool {
 		return peers[i].Route < peers[j].Route
 	})

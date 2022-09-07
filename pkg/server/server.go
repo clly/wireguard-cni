@@ -15,7 +15,6 @@ type Server struct {
 	prefix    *goipam.Prefix
 	ipam      goipam.Ipamer
 	mode      IPAM_MODE
-	self      *wireguardv1.Peer
 }
 
 func NewServer(cidr string, ipamMode IPAM_MODE, w *WireguardServerConfig) (*Server, error) {
@@ -39,14 +38,25 @@ func NewServer(cidr string, ipamMode IPAM_MODE, w *WireguardServerConfig) (*Serv
 		return nil, err
 	}
 
-	return &Server{
+	svr := &Server{
 		wgKey:     m,
 		expvarMap: wireguardExpvar,
 		prefix:    prefix,
 		mode:      ipamMode,
 		ipam:      ipam,
-		self:      w.Self,
-	}, nil
+	}
+
+	if w.Self != nil {
+		if err = svr.registerWGKey(w.Self.PublicKey, &wireguardv1.RegisterRequest{
+			PublicKey: w.Self.GetPublicKey(),
+			Endpoint:  w.Self.Endpoint,
+			Route:     w.Self.Route,
+		}); err != nil {
+			return nil, err
+		}
+	}
+
+	return svr, nil
 }
 
 type MapDbOpt func(*mapDB) error
