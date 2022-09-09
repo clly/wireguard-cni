@@ -111,7 +111,7 @@ func config() NodeConfig {
 		ConfigDirectory:    *configDirectory,
 		ListenAddr:         *listenAddr,
 		Wireguard: WireguardNodeConfig{
-			Endpoint:      *wireguardEndpoint,
+			Endpoint:      addr,
 			InterfaceName: *interfaceName,
 		},
 	}
