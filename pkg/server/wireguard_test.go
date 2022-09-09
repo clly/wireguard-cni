@@ -6,10 +6,11 @@ import (
 	"testing"
 
 	"github.com/bufbuild/connect-go"
-	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
 	"github.com/hashicorp/go-uuid"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
+
+	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
 )
 
 const defaultPrefix = "10.0.0.0/8"
@@ -63,8 +64,11 @@ func Test_Register(t *testing.T) {
 	}
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {
+			// d := t.TempDir()
 			r := require.New(t)
-			s, err := NewServer(defaultPrefix, CLUSTER_MODE, nil)
+			// jsonFile := filepath.Join(d, "wireguard.json")
+			s, err := NewServer(defaultPrefix)
+
 			r.NoError(err)
 			expectedResponse := connect.NewResponse(testcase.resp)
 			req := connect.NewRequest(testcase.req)
@@ -72,6 +76,10 @@ func Test_Register(t *testing.T) {
 			if testcase.err != nil {
 				r.Error(err)
 				r.EqualError(testcase.err, err.Error())
+				// r.Eventuallyf(func() bool {
+				// 	_, err := os.Stat(jsonFile)
+				// 	return !os.IsNotExist(err)
+				// }, 10*time.Second, 1*time.Second, "json state file does not exist")
 			} else {
 				r.Nil(err)
 				r.Equal(expectedResponse, resp)
@@ -111,9 +119,10 @@ func Test_Peers(t *testing.T) {
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {
 			r := require.New(t)
-			s, err := NewServer(defaultPrefix, CLUSTER_MODE, nil)
+			s, err := NewServer(defaultPrefix)
 			r.NoError(err)
-			m := newMapDB()
+			m, err := newMapDB()
+			r.NoError(err)
 			if testcase.peersFunc != nil {
 				testcase.peersFunc(t, m)
 				reqs := m.List()
@@ -201,9 +210,11 @@ func Test_PeersNodeMode(t *testing.T) {
 		t.Run(testcase.name, func(t *testing.T) {
 			r := require.New(t)
 			p := self()
-			s, err := NewServer(defaultPrefix, NODE_MODE, p)
+			s, err := NewServer(defaultPrefix, WithNodeConfig(p))
 			r.NoError(err)
-			m := newMapDB()
+
+			m, err := newMapDB()
+			r.NoError(err)
 			if testcase.peersFunc != nil {
 				testcase.peersFunc(t, m)
 				reqs := m.List()

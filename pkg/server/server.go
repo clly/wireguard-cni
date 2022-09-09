@@ -4,9 +4,9 @@ import (
 	"expvar"
 	"sync"
 
-	"github.com/bufbuild/connect-go"
-	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
 	goipam "github.com/metal-stack/go-ipam"
+
+	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
 )
 
 type Server struct {
@@ -15,37 +15,96 @@ type Server struct {
 	prefix    *goipam.Prefix
 	ipam      goipam.Ipamer
 	mode      IPAM_MODE
-	self      *wireguardv1.Peer
 }
 
-func (s *Server) ListPeers() ([]*wireguardv1.Peer, error) {
-	keyList := s.wgKey.List()
-	peers := make([]*wireguardv1.Peer, 0, len(keyList))
-	for _, v := range keyList {
-		regReq, err := registerFromString(v)
-		if err != nil {
-			return nil, connect.NewError(connect.CodeInternal, err)
-		}
-		p := &wireguardv1.Peer{
-			PublicKey: regReq.GetPublicKey(),
-			Endpoint:  regReq.GetEndpoint(),
-			Route:     regReq.GetRoute(),
-		}
-		peers = append(peers, p)
-	}
-	return peers, nil
+type serverConfig struct {
+	mode IPAM_MODE
+	self *wireguardv1.Peer
 }
+
+type newServerOpt func(cfg *serverConfig)
+
+func WithNodeConfig(self *wireguardv1.Peer) newServerOpt {
+	return func(cfg *serverConfig) {
+		cfg.mode = NODE_MODE
+		cfg.self = self
+	}
+}
+
+func NewServer(cidr string, opt ...newServerOpt) (*Server, error) {
+	wireguardExpvar.Init()
+
+	ipam := goipam.New()
+
+	prefix, err := ipam.NewPrefix(cidr)
+	if err != nil {
+		return nil, err
+	}
+
+	once.Do(func() {
+		expvar.Publish("ipam-usage", expvar.Func(ipamUsage(ipam, prefix.Cidr)))
+	})
+
+	mapDBOpts := make([]MapDbOpt, 0, 1)
+
+	m, err := newMapDB(mapDBOpts...)
+	if err != nil {
+		return nil, err
+	}
+
+	var cfg = serverConfig{
+		mode: CLUSTER_MODE,
+	}
+	for _, o := range opt {
+		o(&cfg)
+	}
+
+	svr := &Server{
+		wgKey:     m,
+		expvarMap: wireguardExpvar,
+		prefix:    prefix,
+		mode:      cfg.mode,
+		ipam:      ipam,
+	}
+
+	if cfg.self != nil {
+		if err = svr.registerWGKey(cfg.self.PublicKey, &wireguardv1.RegisterRequest{
+			PublicKey: cfg.self.GetPublicKey(),
+			Endpoint:  cfg.self.Endpoint,
+			Route:     cfg.self.Route,
+		}); err != nil {
+			return nil, err
+		}
+	}
+
+	return svr, nil
+}
+
+type MapDbOpt func(*mapDB) error
 
 type mapDB struct {
-	db map[string]string
-	m  *sync.RWMutex
+	db          map[string]string
+	m           *sync.RWMutex
+	writeSignal chan struct{}
 }
 
-func newMapDB() *mapDB {
-	return &mapDB{
-		db: map[string]string{},
-		m:  &sync.RWMutex{},
+func newMapDB(opt ...MapDbOpt) (*mapDB, error) {
+	writeSignal := make(chan struct{}, 1)
+	m := &mapDB{
+		db:          map[string]string{},
+		m:           &sync.RWMutex{},
+		writeSignal: writeSignal,
 	}
+	for _, o := range opt {
+		err := o(m)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// go m.persist()
+
+	return m, nil
 }
 
 func (m *mapDB) Set(k string, v string) {

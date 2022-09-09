@@ -10,7 +10,6 @@ import (
 	"github.com/bufbuild/connect-go"
 	ipamv1 "github.com/clly/wireguard-cni/gen/wgcni/ipam/v1"
 	"github.com/clly/wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
-	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
 	goipam "github.com/metal-stack/go-ipam"
 )
 
@@ -33,30 +32,6 @@ func init() {
 
 func (s *Server) IPAMServiceHandler() (string, http.Handler) {
 	return ipamv1connect.NewIPAMServiceHandler(s)
-}
-
-func NewServer(cidr string, ipamMode IPAM_MODE, self *wireguardv1.Peer) (*Server, error) {
-	wireguardExpvar.Init()
-
-	ipam := goipam.New()
-
-	prefix, err := ipam.NewPrefix(cidr)
-	if err != nil {
-		return nil, err
-	}
-
-	once.Do(func() {
-		expvar.Publish("ipam-usage", expvar.Func(ipamUsage(ipam, prefix.Cidr)))
-	})
-
-	return &Server{
-		wgKey:     newMapDB(),
-		expvarMap: wireguardExpvar,
-		prefix:    prefix,
-		mode:      ipamMode,
-		ipam:      ipam,
-		self:      self,
-	}, nil
 }
 
 func ipamUsage(i goipam.Ipamer, cidrPrefix string) func() any {

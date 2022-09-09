@@ -8,7 +8,10 @@ import (
 	"log"
 	"path/filepath"
 
+	"github.com/hashicorp/go-cleanhttp"
+
 	"github.com/bufbuild/connect-go"
+
 	ipamv1 "github.com/clly/wireguard-cni/gen/wgcni/ipam/v1"
 	"github.com/clly/wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
 	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
@@ -40,13 +43,22 @@ type NodeManagerServer struct {
 	cancelers []context.CancelFunc
 }
 
-func NewNodeManagerServer(ctx context.Context, cfg NodeConfig, ipamClient ipamv1connect.IPAMServiceClient, wireguardClient wireguardv1connect.WireguardServiceClient) (*NodeManagerServer, error) {
+func NewNodeManagerServer(ctx context.Context, cfg NodeConfig) (*NodeManagerServer, error) {
+	ipamClient := ipamv1connect.NewIPAMServiceClient(cleanhttp.DefaultClient(), cfg.ClusterManagerAddr)
+	wireguardClient := wireguardv1connect.NewWireguardServiceClient(cleanhttp.DefaultClient(), cfg.ClusterManagerAddr)
+
 	alloc, err := ipamClient.Alloc(context.Background(), connect.NewRequest(&ipamv1.AllocRequest{}))
 	if err != nil {
 		return nil, err
 	}
+
 	cidr := fmt.Sprintf("%s/%s", alloc.Msg.GetAlloc().Address, alloc.Msg.GetAlloc().Netmask)
-	cfg.Wireguard.Route = cidr
+
+	wireguardConfig := wireguard.Config{
+		Route:    cidr,
+		Endpoint: cfg.Wireguard.Endpoint,
+	}
+
 	postUpCmd := fmt.Sprintf(PostUp, cidr)
 	postUpVar.Set(postUpCmd)
 	postDownCmd := fmt.Sprintf(PostDown, cidr)
@@ -56,18 +68,20 @@ func NewNodeManagerServer(ctx context.Context, cfg NodeConfig, ipamClient ipamv1
 	// This is a shitty circular dependency I've created. We need the self for the server to include ourselves in the
 	// peers response but we also need the server to set our own configs, so now it's eventually consistent and I'm sad.
 	// We can refactor it but probably later
-	wgManager, err := wireguard.New(ctx, cfg.Wireguard, wireguardClient, wireguard.WithPost(postUpCmd, postDownCmd))
+	wgManager, err := wireguard.New(ctx, wireguardConfig, wireguardClient, wireguard.WithPost(postUpCmd, postDownCmd))
 	if err != nil {
 		return nil, fmt.Errorf("failed to start wireguard manager %w", err)
 	}
 
 	wgSelf := wgManager.Self()
 
-	svr, err := server.NewServer(cidr, server.NODE_MODE, &wireguardv1.Peer{
+	self := &wireguardv1.Peer{
 		PublicKey: wgSelf.PublicKey,
 		Endpoint:  wgSelf.Endpoint,
 		Route:     wgSelf.AllowedIPs,
-	})
+	}
+
+	svr, err := server.NewServer(cidr, server.WithNodeConfig(self))
 	if err != nil {
 		return nil, err
 	}
