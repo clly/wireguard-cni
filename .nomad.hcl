@@ -15,4 +15,8 @@ advertise {
 client {
     cni_config_dir = "/opt/cni/config"
     network_interface = "{{ GetPrivateInterfaces | include \"network\" \"192.168.56.0/24\" | attr \"name\" }}"
+    host_network "public" {
+      cidr = "10.0.2.15/24"
+    }
 }
+

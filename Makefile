@@ -21,7 +21,7 @@ else
 endif
 
 .PHONY: all
-all: proto test build
+all: proto mocks test build
 
 .PHONY: proto
 proto: buf/lint deps
@@ -36,6 +36,13 @@ deps: ./.bin/buf ./.bin/protoc-gen-go ./.bin/protoc-gen-connect-go ## deps: inst
 
 .PHONY: extra-deps
 extra-deps: ./.bin/hc-install ./.bin/nomad ./.bin/vagrant ## extra-deps: installs other tools like nomad and vagrant
+
+.PHONY: mocks
+mocks: ./.bin/mockery
+	@./.bin/mockery --all --inpackage
+
+./.bin/mockery:
+	GOBIN=${CWD}/${BIN} go install github.com/vektra/mockery/v2@v2.14.0
 
 ./.bin/buf:
 	GOBIN=${CWD}/${BIN} go install github.com/bufbuild/buf/cmd/buf@v1.5.0
