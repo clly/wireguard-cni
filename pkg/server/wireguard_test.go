@@ -3,7 +3,10 @@ package server
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/hashicorp/go-uuid"
@@ -64,10 +67,10 @@ func Test_Register(t *testing.T) {
 	}
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {
-			// d := t.TempDir()
+			d := t.TempDir()
 			r := require.New(t)
-			// jsonFile := filepath.Join(d, "wireguard.json")
-			s, err := NewServer(defaultPrefix)
+			jsonFile := filepath.Join(d, clusterWireguardFile)
+			s, err := NewServer(defaultPrefix, WithDataDir(d))
 
 			r.NoError(err)
 			expectedResponse := connect.NewResponse(testcase.resp)
@@ -76,13 +79,13 @@ func Test_Register(t *testing.T) {
 			if testcase.err != nil {
 				r.Error(err)
 				r.EqualError(testcase.err, err.Error())
-				// r.Eventuallyf(func() bool {
-				// 	_, err := os.Stat(jsonFile)
-				// 	return !os.IsNotExist(err)
-				// }, 10*time.Second, 1*time.Second, "json state file does not exist")
 			} else {
 				r.Nil(err)
 				r.Equal(expectedResponse, resp)
+				r.Eventuallyf(func() bool {
+					_, err := os.Stat(jsonFile)
+					return !os.IsNotExist(err)
+				}, 10*time.Second, 1*time.Second, "json state file does not exist")
 			}
 		})
 	}

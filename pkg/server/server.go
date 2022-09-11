@@ -2,7 +2,12 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"expvar"
+	"io"
+	"log"
+	"os"
+	"path/filepath"
 	"sync"
 
 	goipam "github.com/metal-stack/go-ipam"
@@ -19,8 +24,9 @@ type Server struct {
 }
 
 type serverConfig struct {
-	mode IPAM_MODE
-	self *wireguardv1.Peer
+	mode             IPAM_MODE
+	self             *wireguardv1.Peer
+	wireguardDataDir string
 }
 
 type newServerOpt func(cfg *serverConfig)
@@ -29,6 +35,12 @@ func WithNodeConfig(self *wireguardv1.Peer) newServerOpt {
 	return func(cfg *serverConfig) {
 		cfg.mode = NODE_MODE
 		cfg.self = self
+	}
+}
+
+func WithDataDir(d string) newServerOpt {
+	return func(cfg *serverConfig) {
+		cfg.wireguardDataDir = d
 	}
 }
 
@@ -46,18 +58,28 @@ func NewServer(cidr string, opt ...newServerOpt) (*Server, error) {
 		expvar.Publish("ipam-usage", expvar.Func(ipamUsage(ipam, prefix.Cidr)))
 	})
 
-	mapDBOpts := make([]MapDbOpt, 0, 1)
-
-	m, err := newMapDB(mapDBOpts...)
-	if err != nil {
-		return nil, err
-	}
-
 	var cfg = serverConfig{
 		mode: CLUSTER_MODE,
 	}
 	for _, o := range opt {
 		o(&cfg)
+	}
+
+	mapDBOpts := make([]MapDbOpt, 0, 1)
+	if cfg.wireguardDataDir != "" {
+		var filename string
+		switch cfg.mode {
+		case CLUSTER_MODE:
+			filename = clusterWireguardFile
+		case NODE_MODE:
+			filename = nodeWireguardFile
+		}
+
+		mapDBOpts = append(mapDBOpts, WithJSONDB(cfg.wireguardDataDir, filename))
+	}
+	m, err := newMapDB(mapDBOpts...)
+	if err != nil {
+		return nil, err
 	}
 
 	svr := &Server{
@@ -83,10 +105,24 @@ func NewServer(cidr string, opt ...newServerOpt) (*Server, error) {
 
 type MapDbOpt func(*mapDB) error
 
+const nodeWireguardFile = "node-wireguard.json"
+const clusterWireguardFile = "cluster-wireguard.json"
+
+func WithJSONDB(dataDir, filename string) MapDbOpt {
+	return func(db *mapDB) error {
+		if err := os.MkdirAll(dataDir, 0755); err != nil {
+			return err
+		}
+		db.persistFile = filepath.Join(dataDir, filename)
+		return nil
+	}
+}
+
 type mapDB struct {
 	db          map[string]string
 	m           *sync.RWMutex
 	writeSignal chan struct{}
+	persistFile string
 }
 
 func newMapDB(opt ...MapDbOpt) (*mapDB, error) {
@@ -103,7 +139,7 @@ func newMapDB(opt ...MapDbOpt) (*mapDB, error) {
 		}
 	}
 
-	// go m.persist()
+	go m.persist()
 
 	return m, nil
 }
@@ -111,6 +147,7 @@ func newMapDB(opt ...MapDbOpt) (*mapDB, error) {
 func (m *mapDB) Set(k string, v string) {
 	m.m.Lock()
 	m.db[k] = v
+	m.writeSignal <- struct{}{}
 	m.m.Unlock()
 }
 
@@ -129,4 +166,29 @@ func (m *mapDB) List() []string {
 	}
 	m.m.RUnlock()
 	return peers
+}
+
+func (m *mapDB) persist() {
+	for {
+		<-m.writeSignal
+		if m.persistFile == "" {
+			return
+		}
+		f, err := os.OpenFile(m.persistFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+		if err != nil {
+			log.Println("failed to open database file")
+		}
+		write(f, m.db)
+	}
+
+}
+
+func write(w io.Writer, m map[string]string) {
+	encoder := json.NewEncoder(w)
+	encoder.SetIndent("", "\t")
+	encoder.SetEscapeHTML(false)
+	err := encoder.Encode(m)
+	if err != nil {
+		log.Println("failed to persist wireguard database", err)
+	}
 }
