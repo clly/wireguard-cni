@@ -2,7 +2,7 @@ job "node-manager" {
     type = "system"
     datacenters = ["dc1"]
 
-    group "host-manager" {
+    group "node-manager" {
         count = 1
 
         network {
@@ -18,10 +18,12 @@ job "node-manager" {
             config {
                 network_mode = "host"
                 cap_add = ["net_admin","sys_module","net_raw"] // net_admin, net_raw for iptables, sys_module for loading wireguard if necessary.
-                image = "clly/wireguard-cni:v0.0.3"
-                args = ["node-manager",""]
+                image = "clly/wireguard-cni:v0.0.4"
+                args = ["node-manager","-wireguard-sockaddr-network=192.168.56.0/24"]
             }
-
+            resources {
+                memory = 50
+            }
 
             template {
                 data = <<EOL

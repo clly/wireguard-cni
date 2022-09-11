@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"expvar"
 	"io"
@@ -48,7 +49,7 @@ func NewServer(cidr string, opt ...newServerOpt) (*Server, error) {
 
 	ipam := goipam.New()
 
-	prefix, err := ipam.NewPrefix(cidr)
+	prefix, err := ipam.NewPrefix(context.TODO(), cidr)
 	if err != nil {
 		return nil, err
 	}

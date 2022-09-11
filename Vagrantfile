@@ -12,7 +12,7 @@ Vagrant.configure("2") do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
-  config.env.enable # enable .env support plugin (it will let us easily enable cloud_init support)
+  #config.env.enable # enable .env support plugin (it will let us easily enable cloud_init support)
 
   # URL used as a source for the vm.box defined above
   config.vm.box_url = "https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64-vagrant.box"
@@ -22,12 +22,14 @@ Vagrant.configure("2") do |config|
     server.vm.hostname = "wg-server"
     server.vm.network "private_network", ip: "192.168.56.11"
     server.vm.network "forwarded_port", guest: 4646, host: 14646, host_ip: "127.0.0.1"
+    server.vm.network "forwarded_port", guest: 9002, host: 19002, host_ip: "127.0.0.1"
   end
 
   config.vm.define "peer" do |peer|
     peer.vm.box = "wg-peer"
     peer.vm.hostname = "wg-peer"
     peer.vm.network "private_network", ip: "192.168.56.10"
+    peer.vm.network "forwarded_port", guest: 9002, host: 29002, host_ip: "127.0.0.1"
   end
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -102,6 +104,7 @@ Vagrant.configure("2") do |config|
     cp .nomad.hcl /etc/nomad.d/nomad.hcl
     cp config/nomad-systemd.service /etc/systemd/system/nomad.service
 
+    mkdir -p /opt/nomad
     chmod +x /usr/local/bin/nomad
     if [[ $(hostnamectl --static) == "wg-peer" ]]; then
       cp config/client.hcl /etc/nomad.d/

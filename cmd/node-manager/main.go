@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"expvar"
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"os/signal"
 
 	"github.com/hashicorp/go-sockaddr"
+	socktemplate "github.com/hashicorp/go-sockaddr/template"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
@@ -82,21 +84,34 @@ func config() NodeConfig {
 	}
 	clusterMgrAddr := flag.String("cluster-manager-url", "", "CNI Cluster Manager address")
 	wireguardEndpoint := flag.String("wireguard-endpoint", addr, "endpoint:port for the wireguard socket")
+	wireguardParse := flag.String("wireguard-sockaddr-network", "", "use sockaddr to parse the subnet on the interface for the wireguard endpoint")
 	interfaceName := flag.String("wireguard-interface", "wg0", "wireguard interface name")
 	configDirectory := flag.String("wireguard-config-directory", "/etc/wireguard", "Wireguard configuration directory")
 	listenAddr := flag.String("addr", "localhost:5242", "node manager listen address")
 
 	flag.Parse()
+	addr = *wireguardEndpoint
+
+	if *wireguardParse != "" {
+		log.Println(*wireguardParse)
+		socktmpl := fmt.Sprintf("{{ GetPrivateInterfaces|include \"network\" \"%s\" | attr \"address\" }}", *wireguardParse)
+		log.Println("parsing wireguard endpoint using sockaddr", socktmpl)
+		addr, err = socktemplate.Parse(socktmpl)
+		if err != nil {
+			log.Fatal("failed to parse sockaddr tempalte")
+		}
+		addr = net.JoinHostPort(addr, "51820")
+	}
 
 	// later we can use flag.Visit to see if the clusterMgrAddr was visited
-	clusterMgr := os.ExpandEnv(first(*clusterMgrAddr, clusterMgrEnvKey, clusterMgrDefault))
+	clusterMgr := os.ExpandEnv(first(*clusterMgrAddr, os.Getenv(clusterMgrEnvKey), clusterMgrDefault))
 
 	return NodeConfig{
 		ClusterManagerAddr: clusterMgr,
 		ConfigDirectory:    *configDirectory,
 		ListenAddr:         *listenAddr,
 		Wireguard: WireguardNodeConfig{
-			Endpoint:      *wireguardEndpoint,
+			Endpoint:      addr,
 			InterfaceName: *interfaceName,
 		},
 	}
@@ -104,6 +119,7 @@ func config() NodeConfig {
 
 func first(s ...string) string {
 	for _, v := range s {
+		fmt.Fprintln(os.Stderr, v)
 		if v != "" {
 			return v
 		}
