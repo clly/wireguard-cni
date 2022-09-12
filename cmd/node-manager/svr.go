@@ -81,7 +81,7 @@ func NewNodeManagerServer(ctx context.Context, cfg NodeConfig) (*NodeManagerServ
 		Route:     wgSelf.AllowedIPs,
 	}
 
-	svr, err := server.NewServer(cidr, server.WithNodeConfig(self))
+	svr, err := server.NewServer(cidr, server.WithNodeConfig(self), server.WithDataDir(cfg.DataDirectory))
 	if err != nil {
 		return nil, err
 	}

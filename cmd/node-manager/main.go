@@ -63,6 +63,7 @@ type NodeConfig struct {
 	InterfaceName      string
 	ConfigDirectory    string
 	ListenAddr         string
+	DataDirectory      string
 	Wireguard          WireguardNodeConfig
 }
 
@@ -88,6 +89,7 @@ func config() NodeConfig {
 	interfaceName := flag.String("wireguard-interface", "wg0", "wireguard interface name")
 	configDirectory := flag.String("wireguard-config-directory", "/etc/wireguard", "Wireguard configuration directory")
 	listenAddr := flag.String("addr", "localhost:5242", "node manager listen address")
+	dataDir := flag.String("data-dir", "", "Data directory to store ipam and wireguard files in")
 
 	flag.Parse()
 	addr = *wireguardEndpoint
@@ -110,6 +112,7 @@ func config() NodeConfig {
 		ClusterManagerAddr: clusterMgr,
 		ConfigDirectory:    *configDirectory,
 		ListenAddr:         *listenAddr,
+		DataDirectory:      *dataDir,
 		Wireguard: WireguardNodeConfig{
 			Endpoint:      addr,
 			InterfaceName: *interfaceName,
