@@ -156,6 +156,9 @@ func (s *Server) Alloc(
 		Alloc: alloc,
 	}
 
+	if err := s.ipam.save(ctx); err != nil {
+		return nil, err
+	}
 	log.Printf("Allocated new /%s CIDR %s\n", alloc.Netmask, alloc.Address)
 
 	return connect.NewResponse(response), nil

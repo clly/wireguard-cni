@@ -17,10 +17,11 @@ import (
 
 func Test_Alloc(t *testing.T) {
 	testcases := []struct {
-		name string
-		req  *ipamv1.AllocRequest
-		resp *ipamv1.AllocResponse
-		err  error
+		name    string
+		req     *ipamv1.AllocRequest
+		resp    *ipamv1.AllocResponse
+		dataDir func(s string) newServerOpt
+		err     error
 	}{
 		{
 			name: "HappyPath",
@@ -33,11 +34,37 @@ func Test_Alloc(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "HappyWithDataFile",
+			req:  &ipamv1.AllocRequest{},
+			resp: &ipamv1.AllocResponse{
+				Alloc: &ipamv1.IPAlloc{
+					Address: "10.0.0.0",
+					Netmask: "24",
+					Version: ipamv1.IPVersion_IP_VERSION_V4,
+				},
+			},
+			dataDir: func(s string) newServerOpt {
+				return WithDataDir(s)
+			},
+		},
 	}
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {
 			r := require.New(t)
-			s, err := NewServer("10.0.0.0/8")
+			ctx := context.Background()
+
+			// setup serverOpt
+			var opts = make([]newServerOpt, 0)
+			dir := t.TempDir()
+			t.Cleanup(func() {
+				r.NoError(os.RemoveAll(dir))
+			})
+			if testcase.dataDir != nil {
+				opts = append(opts, WithDataDir(dir))
+			}
+
+			s, err := NewServer("10.0.0.0/8", opts...)
 			r.NoError(err)
 			expectedResponse := connect.NewResponse(testcase.resp)
 			req := connect.NewRequest(testcase.req)
@@ -48,6 +75,23 @@ func Test_Alloc(t *testing.T) {
 			} else {
 				r.Nil(err)
 				r.Equal(expectedResponse, resp)
+			}
+
+			if testcase.dataDir != nil {
+				dataFile := filepath.Join(dir, IpamDataFile)
+				r.FileExists(dataFile)
+
+				// load data file
+				b, err := ioutil.ReadFile(dataFile)
+				r.NoError(err)
+				ipam := goipam.New()
+				err = ipam.Load(ctx, string(b))
+				r.NoError(err)
+
+				prefixes, err := ipam.ReadAllPrefixCidrs(ctx)
+				r.NoError(err)
+				r.Contains(prefixes, "10.0.0.0/8")
+				r.Contains(prefixes, "10.0.0.0/24")
 			}
 
 		})
