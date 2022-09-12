@@ -19,7 +19,7 @@ type Server struct {
 	wgKey     *mapDB
 	expvarMap *expvar.Map
 	prefix    *goipam.Prefix
-	ipam      goipam.Ipamer
+	ipam      *ipam
 	mode      IPAM_MODE
 }
 
@@ -46,17 +46,8 @@ func WithDataDir(d string) newServerOpt {
 
 func NewServer(cidr string, opt ...newServerOpt) (*Server, error) {
 	wireguardExpvar.Init()
-
-	ipam := goipam.New()
-
-	prefix, err := ipam.NewPrefix(context.TODO(), cidr)
-	if err != nil {
-		return nil, err
-	}
-
-	once.Do(func() {
-		expvar.Publish("ipam-usage", expvar.Func(ipamUsage(ipam, prefix.Cidr)))
-	})
+	// This should eventually be a context from initialization
+	ctx := context.TODO()
 
 	var cfg = serverConfig{
 		mode: CLUSTER_MODE,
@@ -64,6 +55,21 @@ func NewServer(cidr string, opt ...newServerOpt) (*Server, error) {
 	for _, o := range opt {
 		o(&cfg)
 	}
+
+	ipam, err := newIPAM(ctx, cfg.wireguardDataDir, cidr)
+	if err != nil {
+		return nil, err
+	}
+
+	prefix := ipam.PrefixFrom(ctx, cidr)
+
+	if err = ipam.save(ctx); err != nil {
+		return nil, err
+	}
+
+	once.Do(func() {
+		expvar.Publish("ipam-usage", expvar.Func(ipamUsage(ipam, prefix.Cidr)))
+	})
 
 	mapDBOpts := make([]MapDbOpt, 0, 1)
 	if cfg.wireguardDataDir != "" {
