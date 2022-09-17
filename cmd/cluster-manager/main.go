@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"os"
 
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -27,7 +28,11 @@ func main() {
 	log.Println("initializing cluster-manager")
 	c := config()
 	log.Println("initializing server")
-	s, err := server.NewServer(c.prefix)
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+	s, err := server.NewServer(c.prefix, server.WithDataDir(wd))
 	if err != nil {
 		log.Fatal(err)
 	}
