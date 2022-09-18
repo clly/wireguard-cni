@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"expvar"
 	"io"
 	"log"
@@ -110,7 +111,17 @@ const clusterWireguardFile = "cluster-wireguard.json"
 
 func WithJSONDB(dataDir, filename string) MapDbOpt {
 	return func(db *mapDB) error {
-		if err := os.MkdirAll(dataDir, 0755); err != nil {
+		bytes, err := os.ReadFile(filepath.Join(dataDir, filename))
+		if err == nil {
+			err := json.Unmarshal(bytes, &(db).db)
+			if err != nil {
+				return err
+			}
+		} else if errors.Is(err, os.ErrNotExist) {
+			if err := os.MkdirAll(dataDir, 0755); err != nil {
+				return err
+			}
+		} else {
 			return err
 		}
 		db.persistFile = filepath.Join(dataDir, filename)
