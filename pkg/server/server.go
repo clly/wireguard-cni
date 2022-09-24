@@ -112,18 +112,21 @@ const clusterWireguardFile = "cluster-wireguard.json"
 func WithJSONDB(dataDir, filename string) MapDbOpt {
 	return func(db *mapDB) error {
 		bytes, err := os.ReadFile(filepath.Join(dataDir, filename))
-		if err == nil {
-			err := json.Unmarshal(bytes, &(db).db)
-			if err != nil {
-				return err
-			}
-		} else if errors.Is(err, os.ErrNotExist) {
-			if err := os.MkdirAll(dataDir, 0755); err != nil {
-				return err
-			}
-		} else {
+
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
+
+		if err == nil {
+			if err := json.Unmarshal(bytes, &(db).db); err != nil {
+				return err
+			}
+		}
+
+		if err := os.MkdirAll(dataDir, 0755); err != nil {
+			return err
+		}
+
 		db.persistFile = filepath.Join(dataDir, filename)
 		return nil
 	}
