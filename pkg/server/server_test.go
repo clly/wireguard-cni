@@ -34,13 +34,13 @@ func setupWireguardJSONFile(r *require.Assertions, cleanOnly bool) func(r *requi
 	}
 
 	f, err := os.OpenFile(filepath.Join(dataDir, nodeWireguardFile), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+	r.NoError(err)
 	encoder := json.NewEncoder(f)
 	encoder.SetIndent("", "\t")
 	encoder.SetEscapeHTML(false)
-	encoder.Encode(wirguardJson)
+	err = encoder.Encode(wirguardJson)
 	r.NoError(err)
 
-	r.NoError(err)
 	return func(r *require.Assertions) {
 		err := os.RemoveAll(filepath.Join(dataDir, nodeWireguardFile))
 		r.NoError(err)
