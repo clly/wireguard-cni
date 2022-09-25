@@ -87,7 +87,12 @@ func NewNodeManagerServer(ctx context.Context, cfg NodeConfig) (*NodeManagerServ
 		log.Fatal(err)
 	}
 
-	svr, err := server.NewServer(cidr, server.WithNodeConfig(self), server.WithDataDir(wd))
+	if cfg.DataDirectory == "" {
+		cfg.DataDirectory = wd
+	}
+
+	svr, err := server.NewServer(cidr, server.WithNodeConfig(self), server.WithDataDir(cfg.DataDirectory))
+
 	if err != nil {
 		return nil, err
 	}

@@ -21,18 +21,24 @@ var (
 )
 
 type ClusterManagerConfig struct {
-	prefix string
+	prefix        string
+	dataDirectory string
 }
 
 func main() {
 	log.Println("initializing cluster-manager")
 	c := config()
 	log.Println("initializing server")
+
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
 	}
-	s, err := server.NewServer(c.prefix, server.WithDataDir(wd))
+	if c.dataDirectory == "" {
+		c.dataDirectory = wd
+	}
+	s, err := server.NewServer(c.prefix, server.WithDataDir(c.dataDirectory))
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -53,9 +59,11 @@ func main() {
 }
 
 func config() ClusterManagerConfig {
-	cidrPrefix := flag.String("cidr-prefix", "10.0.0.0/8", "Ipam CIDR prefix")
+	cidrPrefix := flag.String("cidr-prefix", "10.0.0.0/8", "IPAM CIDR prefix")
+	dataDir := flag.String("data-dir", "", "Data directory to store ipam and wireguard files in")
 	flag.Parse()
 	return ClusterManagerConfig{
-		prefix: *cidrPrefix,
+		prefix:        *cidrPrefix,
+		dataDirectory: *dataDir,
 	}
 }
