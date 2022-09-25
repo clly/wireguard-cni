@@ -6,6 +6,7 @@ import (
 	"expvar"
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 
 	"github.com/hashicorp/go-cleanhttp"
@@ -81,7 +82,17 @@ func NewNodeManagerServer(ctx context.Context, cfg NodeConfig) (*NodeManagerServ
 		Route:     wgSelf.AllowedIPs,
 	}
 
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if cfg.DataDirectory == "" {
+		cfg.DataDirectory = wd
+	}
+
 	svr, err := server.NewServer(cidr, server.WithNodeConfig(self), server.WithDataDir(cfg.DataDirectory))
+
 	if err != nil {
 		return nil, err
 	}
