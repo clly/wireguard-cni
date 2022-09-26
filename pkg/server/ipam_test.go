@@ -123,7 +123,7 @@ func Test_NewIPAM(t *testing.T) {
 			ipam, err := newIPAM(context.Background(), d, parentPrefix)
 			r.NoError(err)
 			for _, s := range testcase.prefixs {
-				_, err := ipam.AcquireSpecificChildPrefix(ctx, parentPrefix, s)
+				_, err := ipam.Ipamer.AcquireSpecificChildPrefix(ctx, parentPrefix, s)
 				r.NoError(err)
 			}
 			r.NoError(ipam.save(ctx))
@@ -137,7 +137,8 @@ func Test_NewIPAM(t *testing.T) {
 			}
 
 			if testcase.prefixs != nil {
-				actual, err := ipam.ReadAllPrefixCidrs(ctx)
+				actual, err := ipam.Ipamer.ReadAllPrefixCidrs(ctx)
+
 				r.NoError(err)
 				sort.Strings(actual)
 				expectedPrefixes := append(testcase.prefixs, parentPrefix)
