@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/hashicorp/go-cleanhttp"
@@ -88,7 +89,7 @@ func NewNodeManagerServer(ctx context.Context, cfg NodeConfig) (*NodeManagerServ
 	}
 
 	if cfg.DataDirectory == "" {
-		cfg.DataDirectory = wd
+		cfg.DataDirectory = path.Join(wd, "node-manager")
 	}
 
 	svr, err := server.NewServer(cidr, server.WithNodeConfig(self), server.WithDataDir(cfg.DataDirectory))

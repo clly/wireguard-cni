@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -35,7 +36,7 @@ func main() {
 		log.Fatal(err)
 	}
 	if c.dataDirectory == "" {
-		c.dataDirectory = wd
+		c.dataDirectory = path.Join(wd, "cluster-manager")
 	}
 	s, err := server.NewServer(c.prefix, server.WithDataDir(c.dataDirectory))
 
