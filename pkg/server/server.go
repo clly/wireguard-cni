@@ -54,6 +54,12 @@ func NewServer(cidr string, opt ...newServerOpt) (*Server, error) {
 		o(&cfg)
 	}
 
+	if cfg.wireguardDataDir != "" {
+		if err := os.MkdirAll(cfg.wireguardDataDir, 0755); err != nil {
+			return nil, err
+		}
+	}
+
 	ipam, err := newIPAM(ctx, cfg.wireguardDataDir, cidr)
 	if err != nil {
 		return nil, err
@@ -96,6 +102,7 @@ func NewServer(cidr string, opt ...newServerOpt) (*Server, error) {
 			PublicKey: cfg.self.GetPublicKey(),
 			Endpoint:  cfg.self.Endpoint,
 			Route:     cfg.self.Route,
+			Namespace: hostNamespace, // we're going to use / as host network namespace
 		}); err != nil {
 			return nil, err
 		}
@@ -108,6 +115,7 @@ type MapDbOpt func(*mapDB) error
 
 const nodeWireguardFile = "node-wireguard.json"
 const clusterWireguardFile = "cluster-wireguard.json"
+const hostNamespace = "/"
 
 func WithJSONDB(dataDir, filename string) MapDbOpt {
 	return func(db *mapDB) error {

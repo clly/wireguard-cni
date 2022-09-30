@@ -83,6 +83,7 @@ func New(ctx context.Context, cfg Config, client wireguardv1connect.WireguardSer
 		PublicKey: key.PublicKey().String(),
 		Endpoint:  cfg.Endpoint,
 		Route:     cfg.Route,
+		Namespace: cfg.Namespace,
 	}
 	log.Println("registering with public key with upstream", "endpoint", cfg.Endpoint, "route", cfg.Route)
 	_, err = client.Register(ctx, connect.NewRequest(req))

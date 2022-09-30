@@ -25,7 +25,7 @@ import (
 
 // type wgResult struct {}
 
-func addWgInterface(ctx context.Context, cfg PluginConf, netnsContainer string, result *current.Result, netns ns.NetNS) (string, error) {
+func addWgInterface(ctx context.Context, cfg PluginConf, result *current.Result, netns ns.NetNS) (string, error) {
 
 	f, err := ioutil.TempFile("/tmp", "wireguard")
 	if err != nil {
@@ -61,8 +61,6 @@ func addWgInterface(ctx context.Context, cfg PluginConf, netnsContainer string, 
 			Route:     cidr,
 			Namespace: nn.Path(),
 		}
-
-		netns.Path()
 
 		fmt.Fprintln(os.Stderr, wgConf)
 		wgMgr, err := wireguard.New(ctx, wgConf, wireguardClient, wireguard.WithOutput(os.Stderr))
