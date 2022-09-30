@@ -39,7 +39,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	quit(svr, cfg.InterfaceName)
+	quit(svr, cfg.Wireguard.InterfaceName)
 
 	log.Println("initializing serve mux")
 	mux := http.NewServeMux()
@@ -60,7 +60,6 @@ func main() {
 
 type NodeConfig struct {
 	ClusterManagerAddr string
-	InterfaceName      string
 	ConfigDirectory    string
 	ListenAddr         string
 	DataDirectory      string
