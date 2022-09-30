@@ -107,6 +107,7 @@ func getResult(device string, sandbox string) (current.IPConfig, current.Interfa
 	if err != nil {
 		return current.IPConfig{}, current.Interface{}, fmt.Errorf("could not retrieve interface by name: %s %w", device, err)
 	}
+
 	currentInterface := current.Interface{
 		Name:    device,
 		Mac:     intf.HardwareAddr.String(),

@@ -104,15 +104,15 @@ func NewNodeManagerServer(ctx context.Context, cfg NodeConfig) (*NodeManagerServ
 	wgManager.SetAddress(selfAlloc.Msg.Alloc.Address)
 	wgManager.SetPeerRegistry(svr)
 
-	configFile := filepath.Join(cfg.ConfigDirectory, fmt.Sprintf("%s.conf", cfg.InterfaceName))
+	configFile := filepath.Join(cfg.ConfigDirectory, fmt.Sprintf("%s.conf", cfg.Wireguard.InterfaceName))
 
 	if err = setConfig(wgManager, configFile); err != nil {
 		log.Println("failed to write config file")
 		return nil, err
 	}
 
-	if err = wgManager.Up(cfg.InterfaceName); err != nil {
-		log.Println("failed to bring interface", cfg.InterfaceName, "up")
+	if err = wgManager.Up(cfg.Wireguard.InterfaceName); err != nil {
+		log.Println("failed to bring interface", cfg.Wireguard.InterfaceName, "up")
 		return nil, err
 	}
 
