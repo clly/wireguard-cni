@@ -11,16 +11,13 @@ import (
 	"path/filepath"
 	"sync"
 
-	goipam "github.com/metal-stack/go-ipam"
-
 	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
 )
 
 type Server struct {
 	wgKey     *mapDB
 	expvarMap *expvar.Map
-	prefix    *goipam.Prefix
-	ipam      *ipam
+	ipam      *clusterIpam
 	mode      IPAM_MODE
 }
 
@@ -62,14 +59,12 @@ func NewServer(cidr string, opt ...newServerOpt) (*Server, error) {
 		return nil, err
 	}
 
-	prefix := ipam.PrefixFrom(ctx, cidr)
-
 	if err = ipam.save(ctx); err != nil {
 		return nil, err
 	}
 
 	once.Do(func() {
-		expvar.Publish("ipam-usage", expvar.Func(ipamUsage(ipam, prefix.Cidr)))
+		expvar.Publish("ipam-usage", expvar.Func(ipamUsage(ipam.Ipamer, ipam.prefix.Cidr)))
 	})
 
 	mapDBOpts := make([]MapDbOpt, 0, 1)
@@ -92,7 +87,6 @@ func NewServer(cidr string, opt ...newServerOpt) (*Server, error) {
 	svr := &Server{
 		wgKey:     m,
 		expvarMap: wireguardExpvar,
-		prefix:    prefix,
 		mode:      cfg.mode,
 		ipam:      ipam,
 	}
