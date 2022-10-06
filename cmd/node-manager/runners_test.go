@@ -12,6 +12,7 @@ import (
 	"github.com/clly/wireguard-cni/pkg/wireguard"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
 const cfgFile = "hack/wg0.conf"
@@ -29,6 +30,7 @@ var _ wireguard.WireguardManager = (*TestManager)(nil)
 func Test_PeerManagerRunner(t *testing.T) {
 	r := require.New(t)
 	clientM := &wireguardv1connect.MockWireguardServiceClient{}
+	wireguardM := &wireguard.MockWGClient{}
 
 	t.Cleanup(func() {
 		os.Remove(cfgFile)
@@ -58,13 +60,17 @@ func Test_PeerManagerRunner(t *testing.T) {
 			Peers: peers,
 		}), nil)
 
+	wireguardM.On("Device", mock.Anything).
+		Once().
+		Return(&wgtypes.Device{}, nil)
+
 	defer clientM.AssertExpectations(t)
 
 	// how do I eventually make it so that SetPeers doesn't call wg-quick??
 	mgr, err := wireguard.New(context.Background(), wireguard.Config{
 		Endpoint: "192.168.1.1:51820",
 		Route:    "10.0.0.0/24",
-	}, clientM)
+	}, wireguardM, clientM)
 	r.NoError(err)
 
 	tmgr := &TestManager{

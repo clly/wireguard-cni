@@ -21,6 +21,7 @@ import (
 	current "github.com/containernetworking/cni/pkg/types/100"
 	"github.com/containernetworking/plugins/pkg/ns"
 	"github.com/hashicorp/go-cleanhttp"
+	"golang.zx2c4.com/wireguard/wgctrl"
 )
 
 // type wgResult struct {}
@@ -63,7 +64,13 @@ func addWgInterface(ctx context.Context, cfg PluginConf, result *current.Result,
 		}
 
 		fmt.Fprintln(os.Stderr, wgConf)
-		wgMgr, err := wireguard.New(ctx, wgConf, wireguardClient, wireguard.WithOutput(os.Stderr))
+
+		wgclient, err := wgctrl.New()
+		if err != nil {
+			return err
+		}
+
+		wgMgr, err := wireguard.New(ctx, wgConf, wgclient, wireguardClient, wireguard.WithOutput(os.Stderr))
 		if err != nil {
 			log.Println("failed to create wireguard manager")
 			return err

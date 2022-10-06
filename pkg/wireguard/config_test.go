@@ -9,6 +9,7 @@ import (
 	"github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
 var _ WireguardManager = (*WGQuickManager)(nil)
@@ -28,6 +29,7 @@ func Test_New(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			r := require.New(t)
 			wireguardM := &wireguardv1connect.MockWireguardServiceClient{}
+			wgclientM := &MockWGClient{}
 			defer wireguardM.AssertExpectations(t)
 
 			cfg := Config{
@@ -54,7 +56,11 @@ func Test_New(t *testing.T) {
 			})).
 				Return(nil, nil)
 
-			_, err := New(context.Background(), cfg, wireguardM)
+			wgclientM.On("Device", mock.Anything).
+				Once().
+				Return(&wgtypes.Device{}, nil)
+
+			_, err := New(context.Background(), cfg, wgclientM, wireguardM)
 			r.NoError(err)
 
 			if testcase.err != nil {

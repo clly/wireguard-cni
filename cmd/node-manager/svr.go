@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 
 	"github.com/hashicorp/go-cleanhttp"
+	"golang.zx2c4.com/wireguard/wgctrl"
 
 	"github.com/bufbuild/connect-go"
 
@@ -67,10 +68,15 @@ func NewNodeManagerServer(ctx context.Context, cfg NodeConfig) (*NodeManagerServ
 	postDownVar.Set(postDownCmd)
 	wgCidrPrefix.Set(cidr)
 
+	wgclient, err := wgctrl.New()
+	if err != nil {
+		return nil, err
+	}
+
 	// This is a shitty circular dependency I've created. We need the self for the server to include ourselves in the
 	// peers response but we also need the server to set our own configs, so now it's eventually consistent and I'm sad.
 	// We can refactor it but probably later
-	wgManager, err := wireguard.New(ctx, wireguardConfig, wireguardClient, wireguard.WithPost(postUpCmd, postDownCmd))
+	wgManager, err := wireguard.New(ctx, wireguardConfig, wgclient, wireguardClient, wireguard.WithPost(postUpCmd, postDownCmd))
 	if err != nil {
 		return nil, fmt.Errorf("failed to start wireguard manager %w", err)
 	}
