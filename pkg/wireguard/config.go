@@ -104,8 +104,11 @@ func (w *WGQuickManager) expvar() any {
 }
 
 func New(ctx context.Context, cfg Config, wgClient WGClient, client wireguardv1connect.WireguardServiceClient, opts ...WGOption) (*WGQuickManager, error) {
+	if cfg.Device == "" {
+		cfg.Device = "wg0"
+	}
 
-	d, err := deviceIfExists(wgClient, "wg0")
+	d, err := deviceIfExists(wgClient, cfg.Device)
 	if err != nil {
 		return nil, err
 	}

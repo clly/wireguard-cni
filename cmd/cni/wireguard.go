@@ -56,11 +56,13 @@ func addWgInterface(ctx context.Context, cfg PluginConf, result *current.Result,
 
 		cidr := fmt.Sprintf("%s/%s", resp.Msg.Alloc.Address, resp.Msg.Alloc.Netmask)
 
+		device = fmt.Sprintf("wg%s", randomString())
 		wgConf := wireguard.Config{
 			Address:   wgAddr,
 			Endpoint:  addr,
 			Route:     cidr,
 			Namespace: nn.Path(),
+			Device:    device,
 		}
 
 		fmt.Fprintln(os.Stderr, wgConf)
@@ -76,7 +78,6 @@ func addWgInterface(ctx context.Context, cfg PluginConf, result *current.Result,
 			return err
 		}
 
-		device = fmt.Sprintf("wg%s", randomString())
 		readCl, err := openConfig(device)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "failed to open configuration file for interface", device)
