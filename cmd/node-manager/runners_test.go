@@ -64,6 +64,10 @@ func Test_PeerManagerRunner(t *testing.T) {
 		Once().
 		Return(&wgtypes.Device{}, nil)
 
+	wireguardM.On("Device", mock.Anything).
+		Once().
+		Return(&wgtypes.Device{}, nil)
+
 	defer clientM.AssertExpectations(t)
 
 	// how do I eventually make it so that SetPeers doesn't call wg-quick??
