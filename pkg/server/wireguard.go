@@ -65,8 +65,16 @@ func (s *Server) registerWGKey(pk string, msg *wireguardv1.RegisterRequest) erro
 		return fmt.Errorf("proto is broke %w", err)
 	}
 	s.wgKey.Set(pk, string(b))
-	s.expvarMap.Set(pk, msg)
+	s.expvarMap.Set(pk, stringerFunc(func() string {
+		return string(b)
+	}))
 	return nil
+}
+
+type stringerFunc func() string
+
+func (f stringerFunc) String() string {
+	return f()
 }
 
 func (s *Server) Peers(ctx context.Context,
