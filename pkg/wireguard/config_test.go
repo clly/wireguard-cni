@@ -60,9 +60,9 @@ func Test_New(t *testing.T) {
 				Once().
 				Return(&wgtypes.Device{}, nil)
 
-			// wgclientM.On("Device", mock.Anything).
-			// 	Maybe().Twice().
-			// 	Return(&wgtypes.Device{}, nil)
+			wgclientM.On("Device", mock.Anything).
+				Maybe().Once().
+				Return(&wgtypes.Device{}, nil)
 
 			wm, err := New(context.Background(), cfg, wgclientM, wireguardM)
 			r.NoError(err)
