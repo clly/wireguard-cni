@@ -6,6 +6,8 @@ import (
 	"io"
 	"log"
 	"os"
+	"sync"
+	"time"
 
 	"github.com/bufbuild/connect-go"
 	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
@@ -56,6 +58,8 @@ type WGQuickManager struct {
 
 	wgclient WGClient
 	device   *wgtypes.Device
+
+	stopCh chan struct{}
 }
 
 // wireguard client interface
@@ -103,6 +107,8 @@ func (w *WGQuickManager) expvar() any {
 	}
 }
 
+var once = &sync.Once{}
+
 func New(ctx context.Context, cfg Config, wgClient WGClient, client wireguardv1connect.WireguardServiceClient, opts ...WGOption) (*WGQuickManager, error) {
 	if cfg.Device == "" {
 		cfg.Device = "wg0"
@@ -147,13 +153,47 @@ func New(ctx context.Context, cfg Config, wgClient WGClient, client wireguardv1c
 		logOutput: os.Stdout,
 		device:    d,
 		wgclient:  wgClient,
+		stopCh:    make(chan struct{}),
 	}
 
 	for _, opt := range opts {
 		opt(mgr)
 	}
 
-	expDeviceFunc = expvar.Func(mgr.expvar)
+	once.Do(func() {
+		expvar.Publish("wireguard-device-wg0", expvar.Func(mgr.expvar))
+	})
+
+	go func(wm *WGQuickManager, deviceName string) {
+		t := time.NewTicker(30 * time.Second)
+		log.Println("Starting device sync")
+		// sleep for a second to see if we bring up the device quick enough. run it first then periodically
+		time.Sleep(time.Second)
+		d, err := deviceIfExists(wm.wgclient, deviceName)
+		if err != nil {
+			log.Println("failed to read device", err)
+		}
+		if d != nil {
+			wm.device = d
+		}
+		for {
+			select {
+			case <-t.C:
+				log.Println("Syncing device", deviceName)
+				d, err := deviceIfExists(wm.wgclient, deviceName)
+				if err != nil {
+					log.Println("failed to read device", err)
+				}
+				if d != nil {
+					wm.device = d
+				}
+			case <-wm.stopCh:
+				t.Stop()
+				return
+			}
+
+		}
+	}(mgr, cfg.Device)
 
 	return mgr, err
 }

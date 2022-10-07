@@ -60,8 +60,14 @@ func Test_New(t *testing.T) {
 				Once().
 				Return(&wgtypes.Device{}, nil)
 
-			_, err := New(context.Background(), cfg, wgclientM, wireguardM)
+			// wgclientM.On("Device", mock.Anything).
+			// 	Maybe().Twice().
+			// 	Return(&wgtypes.Device{}, nil)
+
+			wm, err := New(context.Background(), cfg, wgclientM, wireguardM)
 			r.NoError(err)
+
+			wm.stopCh <- struct{}{}
 
 			if testcase.err != nil {
 				r.EqualError(err, testcase.err.Error())
