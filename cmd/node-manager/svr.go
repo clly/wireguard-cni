@@ -52,7 +52,7 @@ func NewNodeManagerServer(ctx context.Context, cfg NodeConfig) (*NodeManagerServ
 
 	alloc, err := ipamClient.Alloc(context.Background(), connect.NewRequest(&ipamv1.AllocRequest{}))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to alloc ip range from cluster-manager %w", err)
 	}
 
 	cidr := fmt.Sprintf("%s/%s", alloc.Msg.GetAlloc().Address, alloc.Msg.GetAlloc().Netmask)
