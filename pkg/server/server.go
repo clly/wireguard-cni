@@ -69,7 +69,7 @@ func NewServer(cidr string, opt ...newServerOpt) (*Server, error) {
 	}
 
 	once.Do(func() {
-		expvar.Publish("ipam-usage", expvar.Func(ipamUsage(ipam, prefix.Cidr)))
+		// expvar.Publish("ipam-usage", expvar.Func(ipamUsage(ipam, prefix.Cidr)))
 	})
 
 	mapDBOpts := make([]MapDbOpt, 0, 1)
