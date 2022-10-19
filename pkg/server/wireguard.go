@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"expvar"
 	"fmt"
 	"sort"
 
@@ -14,8 +15,13 @@ import (
 )
 
 var (
-	_ wireguardv1connect.WireguardServiceHandler = &Server{}
+	_               wireguardv1connect.WireguardServiceHandler = &Server{}
+	wireguardExpvar                                            = new(expvar.Map).Init()
 )
+
+func init() {
+	expvar.Publish("wireguard", wireguardExpvar)
+}
 
 func (s *Server) ListPeers() ([]*wireguardv1.Peer, error) {
 	keyList := s.wgKey.List()

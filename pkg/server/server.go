@@ -7,22 +7,29 @@ import (
 	"expvar"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sync"
 
+	"github.com/clly/wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
 	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
+	"github.com/clly/wireguard-cni/pkg/ipam"
+)
+
+var (
+	_ ipamv1connect.IPAMServiceHandler = &Server{}
 )
 
 type Server struct {
 	wgKey     *mapDB
 	expvarMap *expvar.Map
-	ipam      *clusterIpam
-	mode      IPAM_MODE
+	ipam      *ipam.ClusterIpam
+	mode      ipam.IPAM_MODE // TODO abstract this from the Server and put it in ClusterIpam now that we're pulling this away
 }
 
 type serverConfig struct {
-	mode             IPAM_MODE
+	mode             ipam.IPAM_MODE
 	self             *wireguardv1.Peer
 	wireguardDataDir string
 }
@@ -31,7 +38,7 @@ type newServerOpt func(cfg *serverConfig)
 
 func WithNodeConfig(self *wireguardv1.Peer) newServerOpt {
 	return func(cfg *serverConfig) {
-		cfg.mode = NODE_MODE
+		cfg.mode = ipam.NODE_MODE
 		cfg.self = self
 	}
 }
@@ -42,13 +49,17 @@ func WithDataDir(d string) newServerOpt {
 	}
 }
 
+func (s *Server) IPAMServiceHandler() (string, http.Handler) {
+	return ipamv1connect.NewIPAMServiceHandler(s)
+}
+
 func NewServer(cidr string, opt ...newServerOpt) (*Server, error) {
 	wireguardExpvar.Init()
 	// This should eventually be a context from initialization
 	ctx := context.TODO()
 
 	var cfg = serverConfig{
-		mode: CLUSTER_MODE,
+		mode: ipam.CLUSTER_MODE,
 	}
 	for _, o := range opt {
 		o(&cfg)
@@ -60,26 +71,26 @@ func NewServer(cidr string, opt ...newServerOpt) (*Server, error) {
 		}
 	}
 
-	ipam, err := newIPAM(ctx, cfg.wireguardDataDir, cidr)
+	clusterIpam, err := ipam.New(ctx, cfg.wireguardDataDir, cidr)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = ipam.save(ctx); err != nil {
+	if err = clusterIpam.Save(ctx); err != nil {
 		return nil, err
 	}
 
-	once.Do(func() {
-		// expvar.Publish("ipam-usage", expvar.Func(ipamUsage(ipam, ipam.prefix.Cidr)))
-	})
+	// once.Do(func() {
+	// expvar.Publish("ipam-usage", expvar.Func(ipamUsage(ipam.Ipamer, ipam.prefix.Cidr)))
+	// })
 
 	mapDBOpts := make([]MapDbOpt, 0, 1)
 	if cfg.wireguardDataDir != "" {
 		var filename string
 		switch cfg.mode {
-		case CLUSTER_MODE:
+		case ipam.CLUSTER_MODE:
 			filename = clusterWireguardFile
-		case NODE_MODE:
+		case ipam.NODE_MODE:
 			filename = nodeWireguardFile
 		}
 
@@ -94,7 +105,7 @@ func NewServer(cidr string, opt ...newServerOpt) (*Server, error) {
 		wgKey:     m,
 		expvarMap: wireguardExpvar,
 		mode:      cfg.mode,
-		ipam:      ipam,
+		ipam:      clusterIpam,
 	}
 
 	if cfg.self != nil {

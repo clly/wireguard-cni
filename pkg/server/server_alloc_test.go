@@ -2,17 +2,14 @@ package server
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
-	"sort"
 	"testing"
 
 	"github.com/bufbuild/connect-go"
-	goipam "github.com/metal-stack/go-ipam"
-	"github.com/stretchr/testify/require"
-
 	ipamv1 "github.com/clly/wireguard-cni/gen/wgcni/ipam/v1"
+	"github.com/clly/wireguard-cni/pkg/ipam"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_Alloc(t *testing.T) {
@@ -78,14 +75,11 @@ func Test_Alloc(t *testing.T) {
 			}
 
 			if testcase.dataDir != nil {
-				dataFile := filepath.Join(dir, IpamDataFile)
+				dataFile := filepath.Join(dir, ipam.IpamDataFile)
 				r.FileExists(dataFile)
 
 				// load data file
-				b, err := ioutil.ReadFile(dataFile)
-				r.NoError(err)
-				ipam := goipam.New()
-				err = ipam.Load(ctx, string(b))
+				ipam, err := ipam.New(ctx, dir, "10.0.0.0/8")
 				r.NoError(err)
 
 				prefixes, err := ipam.ReadAllPrefixCidrs(ctx)
@@ -93,59 +87,6 @@ func Test_Alloc(t *testing.T) {
 				r.Contains(prefixes, "10.0.0.0/8")
 				r.Contains(prefixes, "10.0.0.0/24")
 			}
-
-		})
-	}
-}
-
-func Test_NewIPAM(t *testing.T) {
-	const parentPrefix = "10.0.0.0/8"
-	testcases := map[string]struct {
-		withDataDir bool
-		prefixs     []string
-	}{
-		"EmptyDataDir": {
-			withDataDir: false,
-		},
-		"WithDataDir": {
-			withDataDir: true,
-		},
-		"WithStoredAllocs": {
-			withDataDir: true,
-			prefixs:     []string{"10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/24"},
-		},
-	}
-	for name, testcase := range testcases {
-		t.Run(name, func(t *testing.T) {
-			r := require.New(t)
-			ctx := context.Background()
-			d := t.TempDir()
-			ipam, err := newIPAM(context.Background(), d, parentPrefix)
-			r.NoError(err)
-			for _, s := range testcase.prefixs {
-				_, err := ipam.Ipamer.AcquireSpecificChildPrefix(ctx, parentPrefix, s)
-				r.NoError(err)
-			}
-			r.NoError(ipam.save(ctx))
-			ipam, err = newIPAM(context.Background(), d, "10.0.0.0/8")
-			r.NoError(err)
-			r.NoError(ipam.save(ctx))
-			if !testcase.withDataDir {
-				r.NoFileExists(IpamDataFile)
-			} else {
-				r.FileExists(filepath.Join(d, IpamDataFile))
-			}
-
-			if testcase.prefixs != nil {
-				actual, err := ipam.Ipamer.ReadAllPrefixCidrs(ctx)
-
-				r.NoError(err)
-				sort.Strings(actual)
-				expectedPrefixes := append(testcase.prefixs, parentPrefix)
-				sort.Strings(expectedPrefixes)
-				r.EqualValues(expectedPrefixes, actual)
-			}
-
 		})
 	}
 }
