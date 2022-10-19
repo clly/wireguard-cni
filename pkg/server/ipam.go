@@ -24,28 +24,31 @@ var (
 	once                                             = &sync.Once{}
 )
 
-// ipam is a wrapper around github.com/metal-stack/go-ipam.Ipamer to make persisting and loading the ipam state easier
-type ipam struct {
+// clusterIpam is a wrapper around github.com/metal-stack/go-clusterIpam.Ipamer to make persisting and loading the clusterIpam state easier
+type clusterIpam struct {
 	goipam.Ipamer
 	persistFile string
+	prefix      *goipam.Prefix
 }
 
 const IpamDataFile = "ipam.json"
 
-func newIPAM(ctx context.Context, dataDir, cidr string) (*ipam, error) {
+func newIPAM(ctx context.Context, dataDir, cidr string) (*clusterIpam, error) {
 	ipamer := goipam.New()
 
-	_, err := ipamer.NewPrefix(ctx, cidr)
+	prefix, err := ipamer.NewPrefix(ctx, cidr)
 	if err != nil {
 		return nil, err
 	}
+
 	var persistFile string
 	if dataDir != "" {
 		persistFile = filepath.Join(dataDir, IpamDataFile)
 	}
-	ipam := &ipam{
+	ipam := &clusterIpam{
 		persistFile: persistFile,
 		Ipamer:      ipamer,
+		prefix:      prefix,
 	}
 	if err := ipam.loadData(ctx); err != nil {
 		return nil, err
@@ -55,7 +58,7 @@ func newIPAM(ctx context.Context, dataDir, cidr string) (*ipam, error) {
 }
 
 // save will dump ipam state from memory into a file
-func (i *ipam) save(ctx context.Context) error {
+func (i *clusterIpam) save(ctx context.Context) error {
 	if i.persistFile == "" {
 		return nil
 	}
@@ -76,7 +79,7 @@ func (i *ipam) save(ctx context.Context) error {
 }
 
 // loadData will load ipam state from the data directory
-func (i *ipam) loadData(ctx context.Context) error {
+func (i *clusterIpam) loadData(ctx context.Context) error {
 	if _, err := os.Stat(i.persistFile); os.IsNotExist(err) {
 		return nil
 	}
@@ -92,7 +95,7 @@ func (i *ipam) loadData(ctx context.Context) error {
 	return i.Ipamer.Load(ctx, string(b))
 }
 
-func (i *ipam) deleteAllPrefixes(ctx context.Context) error {
+func (i *clusterIpam) deleteAllPrefixes(ctx context.Context) error {
 	prefixes, err := i.Ipamer.ReadAllPrefixCidrs(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to read prefixes for deletion %w", err)
@@ -139,7 +142,7 @@ func (s *Server) Alloc(
 
 	switch s.mode {
 	case CLUSTER_MODE:
-		prefix, err := s.ipam.AcquireChildPrefix(ctx, s.prefix.Cidr, 24)
+		prefix, err := s.ipam.AcquireChildPrefix(ctx, s.ipam.prefix.Cidr, 24)
 		if err != nil {
 			return nil, err
 		}
@@ -150,7 +153,7 @@ func (s *Server) Alloc(
 		alloc.Address = ip.String()
 	case NODE_MODE:
 		alloc.Netmask = "32"
-		ip, err := s.ipam.AcquireIP(ctx, s.prefix.Cidr)
+		ip, err := s.ipam.AcquireIP(ctx, s.ipam.prefix.Cidr)
 		if err != nil {
 			return nil, err
 		}

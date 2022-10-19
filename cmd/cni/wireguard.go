@@ -21,11 +21,12 @@ import (
 	current "github.com/containernetworking/cni/pkg/types/100"
 	"github.com/containernetworking/plugins/pkg/ns"
 	"github.com/hashicorp/go-cleanhttp"
+	"golang.zx2c4.com/wireguard/wgctrl"
 )
 
 // type wgResult struct {}
 
-func addWgInterface(ctx context.Context, cfg PluginConf, netnsContainer string, result *current.Result, netns ns.NetNS) (string, error) {
+func addWgInterface(ctx context.Context, cfg PluginConf, result *current.Result, netns ns.NetNS) (string, error) {
 
 	f, err := ioutil.TempFile("/tmp", "wireguard")
 	if err != nil {
@@ -55,23 +56,28 @@ func addWgInterface(ctx context.Context, cfg PluginConf, netnsContainer string, 
 
 		cidr := fmt.Sprintf("%s/%s", resp.Msg.Alloc.Address, resp.Msg.Alloc.Netmask)
 
+		device = fmt.Sprintf("wg%s", randomString())
 		wgConf := wireguard.Config{
 			Address:   wgAddr,
 			Endpoint:  addr,
 			Route:     cidr,
 			Namespace: nn.Path(),
+			Device:    device,
 		}
 
-		netns.Path()
-
 		fmt.Fprintln(os.Stderr, wgConf)
-		wgMgr, err := wireguard.New(ctx, wgConf, wireguardClient, wireguard.WithOutput(os.Stderr))
+
+		wgclient, err := wgctrl.New()
+		if err != nil {
+			return err
+		}
+
+		wgMgr, err := wireguard.New(ctx, wgConf, wgclient, wireguardClient, wireguard.WithOutput(os.Stderr))
 		if err != nil {
 			log.Println("failed to create wireguard manager")
 			return err
 		}
 
-		device = fmt.Sprintf("wg%s", randomString())
 		readCl, err := openConfig(device)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "failed to open configuration file for interface", device)

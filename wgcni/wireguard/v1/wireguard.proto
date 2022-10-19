@@ -13,9 +13,14 @@ service WireguardService {
 }
 
 message RegisterRequest {
+  // public_key is the wireguard public key
   string public_key = 1;
+  // endpoint is the address:port clients should dial to connect to this wireguard peer
   string endpoint = 2;
+  // route is the addresses that can be found on this endpoint
   string route = 3;
+  // namespace is the path to the network namespace that this peer belongs to
+  string namespace = 4;
 }
 
 message RegisterResponse {}

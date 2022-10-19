@@ -123,7 +123,7 @@ func cmdAdd(args *skel.CmdArgs) error {
 		fmt.Fprintln(os.Stderr, "netns: ", args.Netns)
 		fmt.Fprintln(os.Stderr, "netns name: ", filepath.Base(args.Netns))
 		time.Sleep(1 * time.Second)
-		device, err = addWgInterface(ctx, *conf, filepath.Base(args.Netns), result, netns)
+		device, err = addWgInterface(ctx, *conf, result, netns)
 
 		ip, iface, err := getResult(device, args.Netns)
 

@@ -11,16 +11,13 @@ import (
 	"path/filepath"
 	"sync"
 
-	goipam "github.com/metal-stack/go-ipam"
-
 	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
 )
 
 type Server struct {
 	wgKey     *mapDB
 	expvarMap *expvar.Map
-	prefix    *goipam.Prefix
-	ipam      *ipam
+	ipam      *clusterIpam
 	mode      IPAM_MODE
 }
 
@@ -57,19 +54,23 @@ func NewServer(cidr string, opt ...newServerOpt) (*Server, error) {
 		o(&cfg)
 	}
 
+	if cfg.wireguardDataDir != "" {
+		if err := os.MkdirAll(cfg.wireguardDataDir, 0755); err != nil {
+			return nil, err
+		}
+	}
+
 	ipam, err := newIPAM(ctx, cfg.wireguardDataDir, cidr)
 	if err != nil {
 		return nil, err
 	}
-
-	prefix := ipam.PrefixFrom(ctx, cidr)
 
 	if err = ipam.save(ctx); err != nil {
 		return nil, err
 	}
 
 	once.Do(func() {
-		// expvar.Publish("ipam-usage", expvar.Func(ipamUsage(ipam, prefix.Cidr)))
+		// expvar.Publish("ipam-usage", expvar.Func(ipamUsage(ipam, ipam.prefix.Cidr)))
 	})
 
 	mapDBOpts := make([]MapDbOpt, 0, 1)
@@ -92,7 +93,6 @@ func NewServer(cidr string, opt ...newServerOpt) (*Server, error) {
 	svr := &Server{
 		wgKey:     m,
 		expvarMap: wireguardExpvar,
-		prefix:    prefix,
 		mode:      cfg.mode,
 		ipam:      ipam,
 	}
@@ -102,6 +102,7 @@ func NewServer(cidr string, opt ...newServerOpt) (*Server, error) {
 			PublicKey: cfg.self.GetPublicKey(),
 			Endpoint:  cfg.self.Endpoint,
 			Route:     cfg.self.Route,
+			Namespace: hostNamespace, // we're going to use / as host network namespace
 		}); err != nil {
 			return nil, err
 		}
@@ -114,6 +115,7 @@ type MapDbOpt func(*mapDB) error
 
 const nodeWireguardFile = "node-wireguard.json"
 const clusterWireguardFile = "cluster-wireguard.json"
+const hostNamespace = "/"
 
 func WithJSONDB(dataDir, filename string) MapDbOpt {
 	return func(db *mapDB) error {
