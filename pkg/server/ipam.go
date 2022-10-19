@@ -53,6 +53,7 @@ func newIPAM(ctx context.Context, dataDir, cidr string) (*clusterIpam, error) {
 	if err := ipam.loadData(ctx); err != nil {
 		return nil, err
 	}
+
 	return ipam, nil
 }
 
@@ -63,6 +64,9 @@ func (i *clusterIpam) save(ctx context.Context) error {
 	}
 	data, err := i.Ipamer.Dump(ctx)
 	if err != nil {
+		return err
+	}
+	if err = os.MkdirAll(filepath.Dir(i.persistFile), 0775); err != nil {
 		return err
 	}
 	f, err := os.OpenFile(i.persistFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC|os.O_SYNC, 0600)
@@ -120,11 +124,11 @@ func (s *Server) IPAMServiceHandler() (string, http.Handler) {
 	return ipamv1connect.NewIPAMServiceHandler(s)
 }
 
-func ipamUsage(i goipam.Ipamer, cidrPrefix string) func() any {
-	return func() any {
-		return i.PrefixFrom(context.TODO(), cidrPrefix).Usage()
-	}
-}
+// func ipamUsage(i goipam.Ipamer, cidrPrefix string) func() any {
+// 	return func() any {
+// 		return i.PrefixFrom(context.TODO(), cidrPrefix).Usage()
+// 	}
+// }
 
 func (s *Server) Alloc(
 	ctx context.Context,
