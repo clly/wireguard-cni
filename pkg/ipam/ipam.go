@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/clly/wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
 	goipam "github.com/metal-stack/go-ipam"
 )
 
@@ -19,18 +20,35 @@ type ClusterIpam struct {
 	goipam.Ipamer
 	persistFile string
 	Prefix      *goipam.Prefix
+	// ipamClient  ipamv1connect.IPAMServiceClient
 	// TODO abstract the mode away from the server and into here
 }
 
 const IpamDataFile = "ipam.json"
 
 func New(ctx context.Context, dataDir, cidr string) (*ClusterIpam, error) {
-	ipamer := goipam.New()
-
-	prefix, err := ipamer.NewPrefix(ctx, cidr)
+	ipam, err := newIPAM(ctx, dataDir)
 	if err != nil {
 		return nil, err
 	}
+
+	ipam.Prefix = ipam.PrefixFrom(ctx, cidr)
+	if ipam.Prefix == nil {
+		ipam.Prefix, err = ipam.NewPrefix(ctx, cidr)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return ipam, nil
+}
+
+func NewRemoteIPAM(ctx context.Context, dataDir string, ipamClient ipamv1connect.IPAMServiceClient) (*ClusterIpam, error) {
+	return nil, nil
+}
+
+func newIPAM(ctx context.Context, dataDir string) (*ClusterIpam, error) {
+	ipamer := goipam.New()
 
 	var persistFile string
 	if dataDir != "" {
@@ -39,11 +57,11 @@ func New(ctx context.Context, dataDir, cidr string) (*ClusterIpam, error) {
 	ipam := &ClusterIpam{
 		persistFile: persistFile,
 		Ipamer:      ipamer,
-		Prefix:      prefix,
 	}
 	if err := ipam.loadData(ctx); err != nil {
 		return nil, err
 	}
+
 	return ipam, nil
 }
 

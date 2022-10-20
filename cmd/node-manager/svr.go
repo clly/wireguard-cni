@@ -98,7 +98,7 @@ func NewNodeManagerServer(ctx context.Context, cfg NodeConfig) (*NodeManagerServ
 		cfg.DataDirectory = path.Join(wd, "node-manager")
 	}
 
-	svr, err := server.NewServer(cidr, server.WithNodeConfig(self), server.WithDataDir(cfg.DataDirectory))
+	svr, err := server.NewServer(cidr, nil, server.WithNodeConfig(self, ipamClient), server.WithDataDir(cfg.DataDirectory))
 
 	if err != nil {
 		return nil, err

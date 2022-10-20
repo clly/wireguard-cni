@@ -15,13 +15,13 @@ func Test_NewIPAM(t *testing.T) {
 		withDataDir bool
 		prefixs     []string
 	}{
-		"EmptyDataDir": {
+		"LocalIPAMEmptyDataDir": {
 			withDataDir: false,
 		},
-		"WithDataDir": {
+		"LocalIPAMWithDataDir": {
 			withDataDir: true,
 		},
-		"WithStoredAllocs": {
+		"LocalIPAMWithStoredAllocs": {
 			withDataDir: true,
 			prefixs:     []string{"10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/24"},
 		},

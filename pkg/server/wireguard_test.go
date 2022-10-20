@@ -213,7 +213,7 @@ func Test_PeersNodeMode(t *testing.T) {
 		t.Run(testcase.name, func(t *testing.T) {
 			r := require.New(t)
 			p := self()
-			s, err := NewServer(defaultPrefix, WithNodeConfig(p))
+			s, err := NewServer(defaultPrefix, WithNodeConfig(p, nil))
 			r.NoError(err)
 
 			m, err := newMapDB()

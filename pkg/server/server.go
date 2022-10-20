@@ -32,14 +32,16 @@ type serverConfig struct {
 	mode             ipam.IPAM_MODE
 	self             *wireguardv1.Peer
 	wireguardDataDir string
+	ipamClient       ipamv1connect.IPAMServiceClient
 }
 
 type newServerOpt func(cfg *serverConfig)
 
-func WithNodeConfig(self *wireguardv1.Peer) newServerOpt {
+func WithNodeConfig(self *wireguardv1.Peer, ipamClient ipamv1connect.IPAMServiceClient) newServerOpt {
 	return func(cfg *serverConfig) {
 		cfg.mode = ipam.NODE_MODE
 		cfg.self = self
+		cfg.ipamClient = ipamClient
 	}
 }
 
