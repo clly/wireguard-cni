@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 
+	"github.com/bufbuild/connect-go"
+	ipamv1 "github.com/clly/wireguard-cni/gen/wgcni/ipam/v1"
 	"github.com/clly/wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
 	goipam "github.com/metal-stack/go-ipam"
 )
@@ -40,11 +43,41 @@ func New(ctx context.Context, dataDir, cidr string) (*ClusterIpam, error) {
 		}
 	}
 
+	if err = ipam.Save(ctx); err != nil {
+		return nil, err
+	}
+
 	return ipam, nil
 }
 
 func NewRemoteIPAM(ctx context.Context, dataDir string, ipamClient ipamv1connect.IPAMServiceClient) (*ClusterIpam, error) {
-	return nil, nil
+	ipam, err := newIPAM(ctx, dataDir)
+	if err != nil {
+		return nil, err
+	}
+
+	prefixes, err := ipam.ReadAllPrefixCidrs(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println(prefixes)
+	if len(prefixes) == 0 {
+		alloc, err := ipamClient.Alloc(ctx, connect.NewRequest(&ipamv1.AllocRequest{}))
+		if err != nil {
+			return nil, err
+		}
+		cidr := fmt.Sprintf("%s/%s", alloc.Msg.GetAlloc().Address, alloc.Msg.GetAlloc().Netmask)
+		prefix, err := ipam.Ipamer.NewPrefix(ctx, cidr)
+		if err != nil {
+			return nil, err
+		}
+		ipam.Prefix = prefix
+	} else {
+		ipam.Prefix = ipam.PrefixFrom(ctx, prefixes[0])
+	}
+
+	return ipam, nil
 }
 
 func newIPAM(ctx context.Context, dataDir string) (*ClusterIpam, error) {
@@ -62,7 +95,9 @@ func newIPAM(ctx context.Context, dataDir string) (*ClusterIpam, error) {
 		return nil, err
 	}
 
-	return ipam, nil
+	err := ipam.Save(ctx)
+
+	return ipam, err
 }
 
 // save will dump ipam state from memory into a file
@@ -70,8 +105,12 @@ func (i *ClusterIpam) Save(ctx context.Context) error {
 	if i.persistFile == "" {
 		return nil
 	}
+
 	data, err := i.Ipamer.Dump(ctx)
 	if err != nil {
+		return err
+	}
+	if err = os.MkdirAll(path.Dir(i.persistFile), 0755); err != nil {
 		return err
 	}
 	f, err := os.OpenFile(i.persistFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC|os.O_SYNC, 0600)
@@ -93,10 +132,12 @@ func (i *ClusterIpam) loadData(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to delete prefixes for loading %w", err)
 	}
+
 	b, err := ioutil.ReadFile(i.persistFile)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read file %w", err)
 	}
+
 	return i.Ipamer.Load(ctx, string(b))
 }
 

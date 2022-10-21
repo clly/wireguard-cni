@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"expvar"
 	"flag"
 	"log"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/clly/wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
 	"github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
+	"github.com/clly/wireguard-cni/pkg/ipam"
 	"github.com/clly/wireguard-cni/pkg/server"
 )
 
@@ -27,6 +29,7 @@ type ClusterManagerConfig struct {
 }
 
 func main() {
+	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime)
 	log.Println("initializing cluster-manager")
 	c := config()
 	log.Println("initializing server")
@@ -38,7 +41,13 @@ func main() {
 	if c.dataDirectory == "" {
 		c.dataDirectory = path.Join(wd, "cluster-manager")
 	}
-	s, err := server.NewServer(c.prefix, server.WithDataDir(c.dataDirectory))
+
+	clusterIpam, err := ipam.New(context.TODO(), c.dataDirectory, c.prefix)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	s, err := server.NewServer(clusterIpam, server.WithDataDir(c.dataDirectory))
 
 	if err != nil {
 		log.Fatal(err)

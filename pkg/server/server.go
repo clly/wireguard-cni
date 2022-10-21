@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"expvar"
@@ -55,10 +54,8 @@ func (s *Server) IPAMServiceHandler() (string, http.Handler) {
 	return ipamv1connect.NewIPAMServiceHandler(s)
 }
 
-func NewServer(cidr string, opt ...newServerOpt) (*Server, error) {
+func NewServer(clusterIpam *ipam.ClusterIpam, opt ...newServerOpt) (*Server, error) {
 	wireguardExpvar.Init()
-	// This should eventually be a context from initialization
-	ctx := context.TODO()
 
 	var cfg = serverConfig{
 		mode: ipam.CLUSTER_MODE,
@@ -71,15 +68,6 @@ func NewServer(cidr string, opt ...newServerOpt) (*Server, error) {
 		if err := os.MkdirAll(cfg.wireguardDataDir, 0755); err != nil {
 			return nil, err
 		}
-	}
-
-	clusterIpam, err := ipam.New(ctx, cfg.wireguardDataDir, cidr)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = clusterIpam.Save(ctx); err != nil {
-		return nil, err
 	}
 
 	// once.Do(func() {

@@ -53,15 +53,20 @@ func Test_Alloc(t *testing.T) {
 
 			// setup serverOpt
 			var opts = make([]newServerOpt, 0)
-			dir := t.TempDir()
-			t.Cleanup(func() {
-				r.NoError(os.RemoveAll(dir))
-			})
+
+			var dir string
 			if testcase.dataDir != nil {
 				opts = append(opts, WithDataDir(dir))
-			}
 
-			s, err := NewServer("10.0.0.0/8", opts...)
+				dir = t.TempDir()
+				t.Cleanup(func() {
+					r.NoError(os.RemoveAll(dir))
+				})
+			}
+			clusterIpam, err := ipam.New(ctx, dir, "10.0.0.0/8")
+			r.NoError(err)
+
+			s, err := NewServer(clusterIpam, opts...)
 			r.NoError(err)
 			expectedResponse := connect.NewResponse(testcase.resp)
 			req := connect.NewRequest(testcase.req)
