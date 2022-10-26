@@ -22,6 +22,18 @@ pkg/server. You can validate that the implementation still passes tests using `m
 * Unit tests can be executed using `make test`
 
 ## Developing with Vagrant
+* Install [Virtualbox](https://www.virtualbox.org/)
+* Install dependencies with `make extra-deps`
+* Build binaries with `make`
+* ssh to vagrant machine
+** `vagrant ssh server`
+* Execute binaries directly 
+** `/vagrant/bin/cmd/cluster-manager`
+** `/vagrant/bin/cmd/node-manager`
+** `cd /vagrant/bash-poc/wg-cni && sudo ./container-create.bash server`
+** Use logs and other output to examine outputs
+
+## Developing with Vagrant and Nomad
 
 * Install [Virtualbox](https://www.virtualbox.org/)
 * Install dependencies with `make extra-deps`
