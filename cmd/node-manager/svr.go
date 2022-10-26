@@ -19,6 +19,7 @@ import (
 	"github.com/clly/wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
 	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
 	"github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
+	"github.com/clly/wireguard-cni/pkg/ipam"
 	"github.com/clly/wireguard-cni/pkg/server"
 	"github.com/clly/wireguard-cni/pkg/wireguard"
 )
@@ -50,12 +51,25 @@ func NewNodeManagerServer(ctx context.Context, cfg NodeConfig) (*NodeManagerServ
 	ipamClient := ipamv1connect.NewIPAMServiceClient(cleanhttp.DefaultClient(), cfg.ClusterManagerAddr)
 	wireguardClient := wireguardv1connect.NewWireguardServiceClient(cleanhttp.DefaultClient(), cfg.ClusterManagerAddr)
 
-	alloc, err := ipamClient.Alloc(context.Background(), connect.NewRequest(&ipamv1.AllocRequest{}))
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if cfg.DataDirectory == "" {
+		cfg.DataDirectory = path.Join(wd, "node-manager")
+	}
+
+	clusterIpam, err := ipam.NewRemoteIPAM(context.TODO(), cfg.DataDirectory, ipamClient)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to alloc ip range from cluster-manager %w", err)
 	}
 
-	cidr := fmt.Sprintf("%s/%s", alloc.Msg.GetAlloc().Address, alloc.Msg.GetAlloc().Netmask)
+	cidr := clusterIpam.Prefix.Cidr
 
 	wireguardConfig := wireguard.Config{
 		Route:    cidr,
@@ -89,16 +103,7 @@ func NewNodeManagerServer(ctx context.Context, cfg NodeConfig) (*NodeManagerServ
 		Route:     wgSelf.AllowedIPs,
 	}
 
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if cfg.DataDirectory == "" {
-		cfg.DataDirectory = path.Join(wd, "node-manager")
-	}
-
-	svr, err := server.NewServer(cidr, server.WithNodeConfig(self), server.WithDataDir(cfg.DataDirectory))
+	svr, err := server.NewServer(clusterIpam, server.WithNodeConfig(self, ipamClient), server.WithDataDir(cfg.DataDirectory))
 
 	if err != nil {
 		return nil, err

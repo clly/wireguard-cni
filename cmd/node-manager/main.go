@@ -76,6 +76,7 @@ const clusterMgrEnvKey = "CLUSTER_MANAGER_ADDR"
 const clusterMgrDefault = "http://localhost:8080"
 
 func config() NodeConfig {
+	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime)
 	ip, err := sockaddr.GetPrivateIP()
 	addr := net.JoinHostPort(ip, "51820")
 	if err != nil {

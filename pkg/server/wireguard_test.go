@@ -14,6 +14,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
+	"github.com/clly/wireguard-cni/pkg/ipam"
 )
 
 const defaultPrefix = "10.0.0.0/8"
@@ -70,7 +71,9 @@ func Test_Register(t *testing.T) {
 			d := t.TempDir()
 			r := require.New(t)
 			jsonFile := filepath.Join(d, clusterWireguardFile)
-			s, err := NewServer(defaultPrefix, WithDataDir(d))
+			clusterIpam, err := ipam.New(context.Background(), d, defaultPrefix)
+			r.NoError(err)
+			s, err := NewServer(clusterIpam, WithDataDir(d))
 
 			r.NoError(err)
 			expectedResponse := connect.NewResponse(testcase.resp)
@@ -122,7 +125,11 @@ func Test_Peers(t *testing.T) {
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {
 			r := require.New(t)
-			s, err := NewServer(defaultPrefix)
+
+			clusterIpam, err := ipam.New(context.Background(), "", defaultPrefix)
+			r.NoError(err)
+
+			s, err := NewServer(clusterIpam)
 			r.NoError(err)
 			m, err := newMapDB()
 			r.NoError(err)
@@ -213,7 +220,11 @@ func Test_PeersNodeMode(t *testing.T) {
 		t.Run(testcase.name, func(t *testing.T) {
 			r := require.New(t)
 			p := self()
-			s, err := NewServer(defaultPrefix, WithNodeConfig(p))
+
+			clusterIpam, err := ipam.New(context.Background(), "", defaultPrefix)
+			r.NoError(err)
+
+			s, err := NewServer(clusterIpam, WithNodeConfig(p, nil))
 			r.NoError(err)
 
 			m, err := newMapDB()
