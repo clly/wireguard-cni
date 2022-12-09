@@ -3,7 +3,7 @@ module github.com/clly/wireguard-cni
 go 1.18
 
 require (
-	github.com/bufbuild/connect-go v1.1.0
+	github.com/bufbuild/connect-go v1.4.0
 	github.com/containernetworking/cni v1.1.2
 	github.com/containernetworking/plugins v1.1.1
 	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
