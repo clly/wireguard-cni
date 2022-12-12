@@ -14,7 +14,7 @@ require (
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.24.0
 	github.com/stretchr/testify v1.8.1
-	golang.org/x/net v0.3.0
+	golang.org/x/net v0.4.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220504211119-3d4a969bb56b
 	google.golang.org/protobuf v1.28.1
 )
