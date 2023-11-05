@@ -16,10 +16,11 @@ require (
 	github.com/stretchr/testify v1.8.1
 	golang.org/x/net v0.7.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220504211119-3d4a969bb56b
-	google.golang.org/protobuf v1.28.1
+	google.golang.org/protobuf v1.31.0
 )
 
 require (
+	connectrpc.com/connect v1.12.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/avast/retry-go/v4 v4.3.3 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect

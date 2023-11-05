@@ -5,9 +5,9 @@
 package wireguardv1connect
 
 import (
+	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
-	connect_go "github.com/bufbuild/connect-go"
 	v1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
 	http "net/http"
 	strings "strings"
@@ -18,19 +18,34 @@ import (
 // generated with a version of connect newer than the one compiled into your binary. You can fix the
 // problem by either regenerating this code with an older version of connect or updating the connect
 // version compiled into your binary.
-const _ = connect_go.IsAtLeastVersion0_1_0
+const _ = connect.IsAtLeastVersion0_1_0
 
 const (
 	// WireguardServiceName is the fully-qualified name of the WireguardService service.
 	WireguardServiceName = "wgcni.wireguard.v1.WireguardService"
 )
 
+// These constants are the fully-qualified names of the RPCs defined in this package. They're
+// exposed at runtime as Spec.Procedure and as the final two segments of the HTTP route.
+//
+// Note that these are different from the fully-qualified method names used by
+// google.golang.org/protobuf/reflect/protoreflect. To convert from these constants to
+// reflection-formatted method names, remove the leading slash and convert the remaining slash to a
+// period.
+const (
+	// WireguardServiceRegisterProcedure is the fully-qualified name of the WireguardService's Register
+	// RPC.
+	WireguardServiceRegisterProcedure = "/wgcni.wireguard.v1.WireguardService/Register"
+	// WireguardServicePeersProcedure is the fully-qualified name of the WireguardService's Peers RPC.
+	WireguardServicePeersProcedure = "/wgcni.wireguard.v1.WireguardService/Peers"
+)
+
 // WireguardServiceClient is a client for the wgcni.wireguard.v1.WireguardService service.
 type WireguardServiceClient interface {
 	// Register will register a wireguard peer
-	Register(context.Context, *connect_go.Request[v1.RegisterRequest]) (*connect_go.Response[v1.RegisterResponse], error)
+	Register(context.Context, *connect.Request[v1.RegisterRequest]) (*connect.Response[v1.RegisterResponse], error)
 	// Peers rpc will return a list of all wireguard peers
-	Peers(context.Context, *connect_go.Request[v1.PeersRequest]) (*connect_go.Response[v1.PeersResponse], error)
+	Peers(context.Context, *connect.Request[v1.PeersRequest]) (*connect.Response[v1.PeersResponse], error)
 }
 
 // NewWireguardServiceClient constructs a client for the wgcni.wireguard.v1.WireguardService
@@ -40,17 +55,17 @@ type WireguardServiceClient interface {
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
-func NewWireguardServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) WireguardServiceClient {
+func NewWireguardServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) WireguardServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &wireguardServiceClient{
-		register: connect_go.NewClient[v1.RegisterRequest, v1.RegisterResponse](
+		register: connect.NewClient[v1.RegisterRequest, v1.RegisterResponse](
 			httpClient,
-			baseURL+"/wgcni.wireguard.v1.WireguardService/Register",
+			baseURL+WireguardServiceRegisterProcedure,
 			opts...,
 		),
-		peers: connect_go.NewClient[v1.PeersRequest, v1.PeersResponse](
+		peers: connect.NewClient[v1.PeersRequest, v1.PeersResponse](
 			httpClient,
-			baseURL+"/wgcni.wireguard.v1.WireguardService/Peers",
+			baseURL+WireguardServicePeersProcedure,
 			opts...,
 		),
 	}
@@ -58,26 +73,26 @@ func NewWireguardServiceClient(httpClient connect_go.HTTPClient, baseURL string,
 
 // wireguardServiceClient implements WireguardServiceClient.
 type wireguardServiceClient struct {
-	register *connect_go.Client[v1.RegisterRequest, v1.RegisterResponse]
-	peers    *connect_go.Client[v1.PeersRequest, v1.PeersResponse]
+	register *connect.Client[v1.RegisterRequest, v1.RegisterResponse]
+	peers    *connect.Client[v1.PeersRequest, v1.PeersResponse]
 }
 
 // Register calls wgcni.wireguard.v1.WireguardService.Register.
-func (c *wireguardServiceClient) Register(ctx context.Context, req *connect_go.Request[v1.RegisterRequest]) (*connect_go.Response[v1.RegisterResponse], error) {
+func (c *wireguardServiceClient) Register(ctx context.Context, req *connect.Request[v1.RegisterRequest]) (*connect.Response[v1.RegisterResponse], error) {
 	return c.register.CallUnary(ctx, req)
 }
 
 // Peers calls wgcni.wireguard.v1.WireguardService.Peers.
-func (c *wireguardServiceClient) Peers(ctx context.Context, req *connect_go.Request[v1.PeersRequest]) (*connect_go.Response[v1.PeersResponse], error) {
+func (c *wireguardServiceClient) Peers(ctx context.Context, req *connect.Request[v1.PeersRequest]) (*connect.Response[v1.PeersResponse], error) {
 	return c.peers.CallUnary(ctx, req)
 }
 
 // WireguardServiceHandler is an implementation of the wgcni.wireguard.v1.WireguardService service.
 type WireguardServiceHandler interface {
 	// Register will register a wireguard peer
-	Register(context.Context, *connect_go.Request[v1.RegisterRequest]) (*connect_go.Response[v1.RegisterResponse], error)
+	Register(context.Context, *connect.Request[v1.RegisterRequest]) (*connect.Response[v1.RegisterResponse], error)
 	// Peers rpc will return a list of all wireguard peers
-	Peers(context.Context, *connect_go.Request[v1.PeersRequest]) (*connect_go.Response[v1.PeersResponse], error)
+	Peers(context.Context, *connect.Request[v1.PeersRequest]) (*connect.Response[v1.PeersResponse], error)
 }
 
 // NewWireguardServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -85,28 +100,36 @@ type WireguardServiceHandler interface {
 //
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
-func NewWireguardServiceHandler(svc WireguardServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
-	mux := http.NewServeMux()
-	mux.Handle("/wgcni.wireguard.v1.WireguardService/Register", connect_go.NewUnaryHandler(
-		"/wgcni.wireguard.v1.WireguardService/Register",
+func NewWireguardServiceHandler(svc WireguardServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	wireguardServiceRegisterHandler := connect.NewUnaryHandler(
+		WireguardServiceRegisterProcedure,
 		svc.Register,
 		opts...,
-	))
-	mux.Handle("/wgcni.wireguard.v1.WireguardService/Peers", connect_go.NewUnaryHandler(
-		"/wgcni.wireguard.v1.WireguardService/Peers",
+	)
+	wireguardServicePeersHandler := connect.NewUnaryHandler(
+		WireguardServicePeersProcedure,
 		svc.Peers,
 		opts...,
-	))
-	return "/wgcni.wireguard.v1.WireguardService/", mux
+	)
+	return "/wgcni.wireguard.v1.WireguardService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case WireguardServiceRegisterProcedure:
+			wireguardServiceRegisterHandler.ServeHTTP(w, r)
+		case WireguardServicePeersProcedure:
+			wireguardServicePeersHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
 }
 
 // UnimplementedWireguardServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedWireguardServiceHandler struct{}
 
-func (UnimplementedWireguardServiceHandler) Register(context.Context, *connect_go.Request[v1.RegisterRequest]) (*connect_go.Response[v1.RegisterResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("wgcni.wireguard.v1.WireguardService.Register is not implemented"))
+func (UnimplementedWireguardServiceHandler) Register(context.Context, *connect.Request[v1.RegisterRequest]) (*connect.Response[v1.RegisterResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("wgcni.wireguard.v1.WireguardService.Register is not implemented"))
 }
 
-func (UnimplementedWireguardServiceHandler) Peers(context.Context, *connect_go.Request[v1.PeersRequest]) (*connect_go.Response[v1.PeersResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("wgcni.wireguard.v1.WireguardService.Peers is not implemented"))
+func (UnimplementedWireguardServiceHandler) Peers(context.Context, *connect.Request[v1.PeersRequest]) (*connect.Response[v1.PeersResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("wgcni.wireguard.v1.WireguardService.Peers is not implemented"))
 }
