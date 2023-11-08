@@ -12,7 +12,7 @@ BUF=./.bin/buf
 # Respect $GOBIN if set in environment or via $GOENV file.
 GOBIN_DIR ?= $(shell go env GOBIN)
 BIN_DIR ?= $(shell go env GOPATH)/bin
-export PATH := ${CWD}/${BIN}:$(PATH):$(GOBIN_DIR):$(BIN_DIR)
+export PATH := ${CWD}/${BIN}:$(PATH):$(BIN_DIR)
 
 ifneq ("$(wildcard .makefiles/*.mk)","")
 	include .makefiles/*.mk
