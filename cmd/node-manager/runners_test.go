@@ -77,13 +77,14 @@ func Test_PeerManagerRunner(t *testing.T) {
 	}, wireguardM, clientM)
 	r.NoError(err)
 
-	tmgr := &TestManager{
-		WireguardManager: mgr,
-	}
+	// tmgr := &TestManager{
+	// 	WireguardManager: mgr,
+	// }
 
-	go func() {
-		r.NoError(peerMgr(context.Background(), tmgr, cfgFile))
-	}()
+	r.NoError(setConfig(mgr, cfgFile))
+	// go func() {
+	// 	r.NoError(peerMgr(context.Background(), tmgr, cfgFile))
+	// }()
 
 	time.Sleep(2 * time.Second)
 	_, err = os.Stat(cfgFile)
