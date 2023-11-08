@@ -8,10 +8,11 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
+	goipam "github.com/metal-stack/go-ipam"
+
 	ipamv1 "github.com/clly/wireguard-cni/gen/wgcni/ipam/v1"
 	"github.com/clly/wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
-	goipam "github.com/metal-stack/go-ipam"
 )
 
 var (

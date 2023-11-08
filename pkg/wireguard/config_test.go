@@ -4,12 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/bufbuild/connect-go"
-	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
-	"github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
+	"connectrpc.com/connect"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
+
+	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
+	"github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
 )
 
 var _ WireguardManager = (*WGQuickManager)(nil)

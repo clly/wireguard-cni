@@ -3,6 +3,7 @@ module github.com/clly/wireguard-cni
 go 1.18
 
 require (
+	connectrpc.com/connect v1.12.0
 	github.com/bufbuild/connect-go v1.5.1
 	github.com/containernetworking/cni v1.1.2
 	github.com/containernetworking/plugins v1.1.1
@@ -20,7 +21,6 @@ require (
 )
 
 require (
-	connectrpc.com/connect v1.12.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/avast/retry-go/v4 v4.3.3 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect

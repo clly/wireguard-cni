@@ -6,10 +6,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
+	"github.com/stretchr/testify/require"
+
 	ipamv1 "github.com/clly/wireguard-cni/gen/wgcni/ipam/v1"
 	"github.com/clly/wireguard-cni/pkg/ipam"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_Alloc(t *testing.T) {
