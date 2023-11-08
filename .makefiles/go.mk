@@ -15,8 +15,10 @@ fmt: lint/check ## ensure consistent code style
 
 .PHONY: lint/check
 lint/check:  lint/install
+	@echo $$PATH
+	@/home/runner/go/bin/golangci-lint --version
 	@if ! golangci-lint --version > /dev/null 2>&1; then \
-		echo -e "golangci-lint is not installed: run \`make lint-install\` or install it from https://golangci-lint.run"; \
+		echo -e "golangci-lint is not installed: run \`make lint/install\` or install it from https://golangci-lint.run"; \
 		exit 1; \
 	fi
 
@@ -24,7 +26,7 @@ lint/check:  lint/install
 lint/install: ## installs golangci-lint to the go bin dir
 	@if ! golangci-lint --version > /dev/null 2>&1; then \
 		echo "Installing golangci-lint"; \
-		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(BIN_DIR) v1.46.2; \
+		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(BIN_DIR) v1.54.1; \
 	fi
 
 .PHONY: lint

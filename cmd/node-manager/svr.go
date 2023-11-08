@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/go-cleanhttp"
 	"golang.zx2c4.com/wireguard/wgctrl"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 
 	ipamv1 "github.com/clly/wireguard-cni/gen/wgcni/ipam/v1"
 	"github.com/clly/wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
