@@ -13,14 +13,15 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
+
 	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
 )
 
 func (w *WGQuickManager) Up(device string) error {
 	cmd := []string{}
 	if w.namespace != "" {
-		//nsenter --net=/run/docker/netns/f1cffea8d447
+		// nsenter --net=/run/docker/netns/f1cffea8d447
 		cmd = append(cmd, "nsenter", fmt.Sprintf("--net=%s", w.namespace))
 	}
 	cmd = append(cmd, "wg-quick", "up", device)

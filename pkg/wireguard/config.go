@@ -9,10 +9,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
+
 	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
 	"github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
 type Config struct {

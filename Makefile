@@ -51,7 +51,7 @@ mocks: ./.bin/mockery
 	GOBIN=${CWD}/${BIN} go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28.0
 
 ./.bin/protoc-gen-connect-go:
-	GOBIN=${CWD}/${BIN} go install github.com/bufbuild/connect-go/cmd/protoc-gen-connect-go@v0.2.0
+	GOBIN=${CWD}/${BIN} go install connectrpc.com/connect/cmd/protoc-gen-connect-go@v1.12.0
 
 ./.bin/hc-install:
 	GOBIN=${CWD}/${BIN} go install github.com/hashicorp/hc-install/cmd/hc-install@main

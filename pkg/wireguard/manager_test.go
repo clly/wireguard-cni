@@ -7,11 +7,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/bufbuild/connect-go"
-	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
-	"github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
+	"connectrpc.com/connect"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
+	"github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
 )
 
 func Test_WGQuick_Config(t *testing.T) {

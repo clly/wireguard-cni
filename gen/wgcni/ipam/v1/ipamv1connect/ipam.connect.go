@@ -5,9 +5,9 @@
 package ipamv1connect
 
 import (
+	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
-	connect_go "github.com/bufbuild/connect-go"
 	v1 "github.com/clly/wireguard-cni/gen/wgcni/ipam/v1"
 	http "net/http"
 	strings "strings"
@@ -18,17 +18,29 @@ import (
 // generated with a version of connect newer than the one compiled into your binary. You can fix the
 // problem by either regenerating this code with an older version of connect or updating the connect
 // version compiled into your binary.
-const _ = connect_go.IsAtLeastVersion0_1_0
+const _ = connect.IsAtLeastVersion0_1_0
 
 const (
 	// IPAMServiceName is the fully-qualified name of the IPAMService service.
 	IPAMServiceName = "wgcni.ipam.v1.IPAMService"
 )
 
+// These constants are the fully-qualified names of the RPCs defined in this package. They're
+// exposed at runtime as Spec.Procedure and as the final two segments of the HTTP route.
+//
+// Note that these are different from the fully-qualified method names used by
+// google.golang.org/protobuf/reflect/protoreflect. To convert from these constants to
+// reflection-formatted method names, remove the leading slash and convert the remaining slash to a
+// period.
+const (
+	// IPAMServiceAllocProcedure is the fully-qualified name of the IPAMService's Alloc RPC.
+	IPAMServiceAllocProcedure = "/wgcni.ipam.v1.IPAMService/Alloc"
+)
+
 // IPAMServiceClient is a client for the wgcni.ipam.v1.IPAMService service.
 type IPAMServiceClient interface {
 	// Alloc requests a IP address or subnet from the ipam server
-	Alloc(context.Context, *connect_go.Request[v1.AllocRequest]) (*connect_go.Response[v1.AllocResponse], error)
+	Alloc(context.Context, *connect.Request[v1.AllocRequest]) (*connect.Response[v1.AllocResponse], error)
 }
 
 // NewIPAMServiceClient constructs a client for the wgcni.ipam.v1.IPAMService service. By default,
@@ -38,12 +50,12 @@ type IPAMServiceClient interface {
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
-func NewIPAMServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) IPAMServiceClient {
+func NewIPAMServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) IPAMServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &iPAMServiceClient{
-		alloc: connect_go.NewClient[v1.AllocRequest, v1.AllocResponse](
+		alloc: connect.NewClient[v1.AllocRequest, v1.AllocResponse](
 			httpClient,
-			baseURL+"/wgcni.ipam.v1.IPAMService/Alloc",
+			baseURL+IPAMServiceAllocProcedure,
 			opts...,
 		),
 	}
@@ -51,18 +63,18 @@ func NewIPAMServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts
 
 // iPAMServiceClient implements IPAMServiceClient.
 type iPAMServiceClient struct {
-	alloc *connect_go.Client[v1.AllocRequest, v1.AllocResponse]
+	alloc *connect.Client[v1.AllocRequest, v1.AllocResponse]
 }
 
 // Alloc calls wgcni.ipam.v1.IPAMService.Alloc.
-func (c *iPAMServiceClient) Alloc(ctx context.Context, req *connect_go.Request[v1.AllocRequest]) (*connect_go.Response[v1.AllocResponse], error) {
+func (c *iPAMServiceClient) Alloc(ctx context.Context, req *connect.Request[v1.AllocRequest]) (*connect.Response[v1.AllocResponse], error) {
 	return c.alloc.CallUnary(ctx, req)
 }
 
 // IPAMServiceHandler is an implementation of the wgcni.ipam.v1.IPAMService service.
 type IPAMServiceHandler interface {
 	// Alloc requests a IP address or subnet from the ipam server
-	Alloc(context.Context, *connect_go.Request[v1.AllocRequest]) (*connect_go.Response[v1.AllocResponse], error)
+	Alloc(context.Context, *connect.Request[v1.AllocRequest]) (*connect.Response[v1.AllocResponse], error)
 }
 
 // NewIPAMServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -70,19 +82,25 @@ type IPAMServiceHandler interface {
 //
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
-func NewIPAMServiceHandler(svc IPAMServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
-	mux := http.NewServeMux()
-	mux.Handle("/wgcni.ipam.v1.IPAMService/Alloc", connect_go.NewUnaryHandler(
-		"/wgcni.ipam.v1.IPAMService/Alloc",
+func NewIPAMServiceHandler(svc IPAMServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	iPAMServiceAllocHandler := connect.NewUnaryHandler(
+		IPAMServiceAllocProcedure,
 		svc.Alloc,
 		opts...,
-	))
-	return "/wgcni.ipam.v1.IPAMService/", mux
+	)
+	return "/wgcni.ipam.v1.IPAMService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case IPAMServiceAllocProcedure:
+			iPAMServiceAllocHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
 }
 
 // UnimplementedIPAMServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedIPAMServiceHandler struct{}
 
-func (UnimplementedIPAMServiceHandler) Alloc(context.Context, *connect_go.Request[v1.AllocRequest]) (*connect_go.Response[v1.AllocResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("wgcni.ipam.v1.IPAMService.Alloc is not implemented"))
+func (UnimplementedIPAMServiceHandler) Alloc(context.Context, *connect.Request[v1.AllocRequest]) (*connect.Response[v1.AllocResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("wgcni.ipam.v1.IPAMService.Alloc is not implemented"))
 }

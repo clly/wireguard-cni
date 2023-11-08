@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"google.golang.org/protobuf/encoding/protojson"
 

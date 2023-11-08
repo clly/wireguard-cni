@@ -3,6 +3,7 @@ module github.com/clly/wireguard-cni
 go 1.18
 
 require (
+	connectrpc.com/connect v1.12.0
 	github.com/bufbuild/connect-go v1.5.1
 	github.com/containernetworking/cni v1.1.2
 	github.com/containernetworking/plugins v1.1.1
@@ -16,7 +17,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	golang.org/x/net v0.7.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220504211119-3d4a969bb56b
-	google.golang.org/protobuf v1.28.1
+	google.golang.org/protobuf v1.31.0
 )
 
 require (
