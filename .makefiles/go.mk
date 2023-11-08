@@ -16,7 +16,7 @@ fmt: lint/check ## ensure consistent code style
 .PHONY: lint/check
 lint/check:  lint/install
 	@if ! golangci-lint --version > /dev/null 2>&1; then \
-		echo -e "golangci-lint is not installed: run \`make lint-install\` or install it from https://golangci-lint.run"; \
+		echo -e "golangci-lint is not installed: run \`make lint/install\` or install it from https://golangci-lint.run"; \
 		exit 1; \
 	fi
 
