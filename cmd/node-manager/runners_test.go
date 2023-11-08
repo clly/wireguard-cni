@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
 	"github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
 	"github.com/clly/wireguard-cni/pkg/wireguard"

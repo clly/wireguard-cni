@@ -5,7 +5,7 @@ package ipamv1connect
 import (
 	context "context"
 
-	connect "github.com/bufbuild/connect-go"
+	connect "connectrpc.com/connect"
 
 	ipamv1 "github.com/clly/wireguard-cni/gen/wgcni/ipam/v1"
 

@@ -5,7 +5,7 @@ package wireguardv1connect
 import (
 	context "context"
 
-	connect "github.com/bufbuild/connect-go"
+	connect "connectrpc.com/connect"
 
 	mock "github.com/stretchr/testify/mock"
 
