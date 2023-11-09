@@ -13,7 +13,7 @@ require (
 	github.com/metal-stack/go-ipam v1.11.6
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.27.0
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.4
 	golang.org/x/net v0.17.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220504211119-3d4a969bb56b
 	google.golang.org/protobuf v1.31.0
