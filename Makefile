@@ -39,10 +39,10 @@ extra-deps: ./.bin/hc-install ./.bin/nomad ./.bin/vagrant ## extra-deps: install
 
 .PHONY: mocks
 mocks: ./.bin/mockery
-	@./.bin/mockery --all --inpackage
+	@./.bin/mockery --all --inpackage --log-level info
 
 ./.bin/mockery:
-	GOBIN=${CWD}/${BIN} go install github.com/vektra/mockery/v2@v2.14.0
+	GOBIN=${CWD}/${BIN} go install github.com/vektra/mockery/v2@v2.40.1
 
 ./.bin/buf:
 	GOBIN=${CWD}/${BIN} go install github.com/bufbuild/buf/cmd/buf@v1.5.0
