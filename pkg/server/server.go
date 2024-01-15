@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"expvar"
@@ -146,14 +147,17 @@ type mapDB struct {
 	m           *sync.RWMutex
 	writeSignal chan struct{}
 	persistFile string
+	cancel      func()
 }
 
 func newMapDB(opt ...MapDbOpt) (*mapDB, error) {
+	ctx, cancel := context.WithCancel(context.Background())
 	writeSignal := make(chan struct{}, 1)
 	m := &mapDB{
 		db:          map[string]string{},
 		m:           &sync.RWMutex{},
 		writeSignal: writeSignal,
+		cancel:      cancel,
 	}
 	for _, o := range opt {
 		err := o(m)
@@ -162,7 +166,7 @@ func newMapDB(opt ...MapDbOpt) (*mapDB, error) {
 		}
 	}
 
-	go m.persist()
+	go m.persist(ctx)
 
 	return m, nil
 }
@@ -191,9 +195,19 @@ func (m *mapDB) List() []string {
 	return peers
 }
 
-func (m *mapDB) persist() {
+func (m *mapDB) Shutdown() error {
+	m.cancel()
+	return nil
+}
+
+func (m *mapDB) persist(ctx context.Context) {
 	for {
-		<-m.writeSignal
+		select {
+		case <-ctx.Done():
+			return
+		case <-m.writeSignal:
+		}
+
 		if m.persistFile == "" {
 			return
 		}
@@ -202,6 +216,7 @@ func (m *mapDB) persist() {
 			log.Println("failed to open database file")
 		}
 		write(f, m.db)
+		f.Close()
 	}
 
 }

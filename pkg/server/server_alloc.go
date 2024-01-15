@@ -14,7 +14,6 @@ func (s *Server) Alloc(
 	ctx context.Context,
 	req *connect.Request[ipamv1.AllocRequest],
 ) (*connect.Response[ipamv1.AllocResponse], error) {
-
 	alloc := &ipamv1.IPAlloc{
 		Netmask: "24",
 		Version: ipamv1.IPVersion_IP_VERSION_V4,
