@@ -57,7 +57,7 @@ mocks: ./.bin/mockery
 	GOBIN=${CWD}/${BIN} go install github.com/hashicorp/hc-install/cmd/hc-install@main
 
 ./.bin/nomad: ./.bin/hc-install
-	hc-install install -version 1.3.2 -path ./.bin nomad
+	hc-install install -version 1.3.2 -path ./.bin nomad && chmod 755 ./.bin/nomad
 
 ./.bin/vagrant: ./.bin/hc-install
-	hc-install install -version 2.2.19 -path ./.bin vagrant
+	hc-install install -version 2.2.19 -path ./.bin vagrant && chmod 755 ./.bin/vagrant

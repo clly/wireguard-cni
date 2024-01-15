@@ -1,10 +1,10 @@
-FROM golang:1.18 as build
+FROM golang:1.21 as build
 
 WORKDIR /build
 COPY . ./
 RUN make build
 
-FROM ubuntu:focal
+FROM ubuntu:jammy
 
 WORKDIR /opt
 COPY --from=build /build/bin/cmd/ ./
