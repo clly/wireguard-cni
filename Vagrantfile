@@ -15,7 +15,7 @@ Vagrant.configure("2") do |config|
   #config.env.enable # enable .env support plugin (it will let us easily enable cloud_init support)
 
   # URL used as a source for the vm.box defined above
-  config.vm.box_url = "https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64-vagrant.box"
+  config.vm.box_url = "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64-vagrant.box"
 
   config.vm.define "server" do |server|
     server.vm.box = "wg-server"
@@ -91,15 +91,16 @@ Vagrant.configure("2") do |config|
   # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
   # documentation for more information about their specific syntax and use.
   config.vm.provision "shell", inline: <<-SHELL
-    apt-get update && apt-get install -y wireguard-tools docker.io jq containernetworking-plugins make && apt-get upgrade -y
-    cd /tmp &&  wget https://go.dev/dl/go1.18.5.linux-amd64.tar.gz && tar -C /usr/local -xzf go1.18.5.linux-amd64.tar.gz
+    apt-get update && apt-get install -y git wireguard-tools docker.io jq containernetworking-plugins make && apt-get upgrade -y
+    cd /tmp &&  wget https://go.dev/dl/go1.21.6.linux-amd64.tar.gz && tar -C /usr/local -xzf go1.21.6.linux-amd64.tar.gz
     cd /vagrant
-    PATH=/usr/local/go/bin:$PATH make extra-deps docker/build
+    PATH=/usr/local/go/bin:$PATH make extra-deps build
+    ls -l /opt /opt/cni
     mkdir -p /opt/cni/config
-    ln -s /usr/lib/cni /opt/cni/bin
+    ln -snf /usr/lib/cni /opt/cni/bin
     cp bin/cmd/cni /opt/cni/bin/wireguard
     cp .wgnet.conflist /opt/cni/config/wgnet.conflist
-    cp .bin/nomad /usr/local/bin
+    cp -f .bin/nomad /usr/local/bin
     mkdir -p /etc/nomad.d
     cp .nomad.hcl /etc/nomad.d/nomad.hcl
     cp config/nomad-systemd.service /etc/systemd/system/nomad.service
@@ -109,8 +110,10 @@ Vagrant.configure("2") do |config|
     if [[ $(hostnamectl --static) == "wg-peer" ]]; then
       cp config/client.hcl /etc/nomad.d/
       cat config/nomad-systemd.service | sed "s/-dev//" > /etc/systemd/system/nomad.service
+      echo 192.168.56.11 wg-server | sudo tee -a /etc/hosts
+    else
+      echo 192.168.56.10 wg-peer | sudo tee -a /etc/hosts
     fi
-
     systemctl daemon-reload && systemctl start nomad
   SHELL
 end

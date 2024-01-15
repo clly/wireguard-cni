@@ -15,8 +15,6 @@ fmt: lint/check ## ensure consistent code style
 
 .PHONY: lint/check
 lint/check:  lint/install
-	@echo $$PATH
-	@/home/runner/go/bin/golangci-lint --version
 	@if ! golangci-lint --version > /dev/null 2>&1; then \
 		echo -e "golangci-lint is not installed: run \`make lint/install\` or install it from https://golangci-lint.run"; \
 		exit 1; \
@@ -41,7 +39,7 @@ test: lint ## run go tests
 build: ## compile and build artifact
 	@for i in cmd/*; do \
 		echo "building $$i"; \
-		go build -o bin/$$i ./$$i; \
+		go build -v -o bin/$$i ./$$i; \
 	done
 
 .PHONY: docker/build
@@ -50,7 +48,7 @@ docker/build: ## compile and build binaries in a docker contianer
 	-v $$PWD:/app --workdir /app \
 	--user $$(id -u) \
 	-e GOCACHE=/tmp \
-	golang:1.18  make build
+	golang:1.21 make build
 
 
 .PHONY: build/cmd
