@@ -6,14 +6,13 @@ import (
 	"path/filepath"
 	"testing"
 
-	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
+
+	wireguardv1 "github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1"
 )
 
-func setupWireguardJSONFile(r *require.Assertions, cleanOnly bool) func(r *require.Assertions) {
-	dataDir, err := os.Getwd()
-	r.NoError(err)
+func setupWireguardJSONFile(dataDir string, r *require.Assertions) func(r *require.Assertions) {
 	peer1 := wireguardv1.RegisterRequest{
 		PublicKey: "9jalV3EEBnVXahro0pRMQ+cHlmjE33Slo9tddzCVtCw=",
 		Endpoint:  "192.0.2.103:51993",
@@ -50,23 +49,21 @@ func setupWireguardJSONFile(r *require.Assertions, cleanOnly bool) func(r *requi
 func Test_WithJSONDB(t *testing.T) {
 	t.Run("create new wireguard.json if not exists", func(t *testing.T) {
 		r := require.New(t)
-		teardown := setupWireguardJSONFile(r, true)
+		dataDir := t.TempDir()
+		teardown := setupWireguardJSONFile(dataDir, r)
 		defer teardown(r)
 
-		dataDir, err := os.Getwd()
-		r.NoError(err)
 		mapDBOpt := WithJSONDB(dataDir, nodeWireguardFile)
-		_, err = newMapDB(mapDBOpt)
+		_, err := newMapDB(mapDBOpt)
 		r.NoError(err)
 		r.FileExists(filepath.Join(dataDir, nodeWireguardFile))
 	})
 	t.Run("load wireguard keys if wireguard.json already exists", func(t *testing.T) {
 		r := require.New(t)
-		teardown := setupWireguardJSONFile(r, false)
+		dataDir := t.TempDir()
+		teardown := setupWireguardJSONFile(dataDir, r)
 		defer teardown(r)
 
-		dataDir, err := os.Getwd()
-		r.NoError(err)
 		mapDBOpt := WithJSONDB(dataDir, nodeWireguardFile)
 		m, err := newMapDB(mapDBOpt)
 		r.NoError(err)
