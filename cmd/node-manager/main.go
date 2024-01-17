@@ -19,6 +19,7 @@ import (
 
 	"github.com/clly/wireguard-cni/gen/wgcni/ipam/v1/ipamv1connect"
 	"github.com/clly/wireguard-cni/gen/wgcni/wireguard/v1/wireguardv1connect"
+	"github.com/clly/wireguard-cni/pkg/node-manager"
 )
 
 func main() {
@@ -34,7 +35,7 @@ func main() {
 
 	log.Println("initializing server")
 	log.Println("initializing client ipam cidr")
-	svr, err := NewNodeManagerServer(ctx, cfg)
+	svr, err := nodemanager.NewNodeManagerServer(ctx, cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -58,24 +59,10 @@ func main() {
 
 }
 
-type NodeConfig struct {
-	ClusterManagerAddr string
-	ConfigDirectory    string
-	ListenAddr         string
-	DataDirectory      string
-	Wireguard          WireguardNodeConfig
-}
-
-// WireguardNodeConfig contains all the information that gets fed into the wireguard manager at some point
-type WireguardNodeConfig struct {
-	Endpoint      string
-	InterfaceName string
-}
-
 const clusterMgrEnvKey = "CLUSTER_MANAGER_ADDR"
 const clusterMgrDefault = "http://localhost:8080"
 
-func config() NodeConfig {
+func config() nodemanager.NodeConfig {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime)
 	ip, err := sockaddr.GetPrivateIP()
 	addr := net.JoinHostPort(ip, "51820")
@@ -108,12 +95,12 @@ func config() NodeConfig {
 	// later we can use flag.Visit to see if the clusterMgrAddr was visited
 	clusterMgr := os.ExpandEnv(first(*clusterMgrAddr, os.Getenv(clusterMgrEnvKey), clusterMgrDefault))
 
-	return NodeConfig{
+	return nodemanager.NodeConfig{
 		ClusterManagerAddr: clusterMgr,
 		ConfigDirectory:    *configDirectory,
 		ListenAddr:         *listenAddr,
 		DataDirectory:      *dataDir,
-		Wireguard: WireguardNodeConfig{
+		Wireguard: nodemanager.WireguardNodeConfig{
 			Endpoint:      addr,
 			InterfaceName: *interfaceName,
 		},
@@ -130,17 +117,14 @@ func first(s ...string) string {
 	return ""
 }
 
-func quit(mgr *NodeManagerServer, device string) {
+func quit(mgr *nodemanager.NodeManagerServer, device string) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 
 	go func() {
 		<-c
 		log.Println("shutting down...")
-		logOnErr(mgr.wgManager.Down(device))
-		for _, cancel := range mgr.cancelers {
-			cancel()
-		}
+		logOnErr(mgr.Down(device))
 		os.Exit(1)
 	}()
 }

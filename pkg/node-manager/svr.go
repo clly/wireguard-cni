@@ -1,4 +1,4 @@
-package main
+package nodemanager
 
 import (
 	"context"
@@ -41,6 +41,19 @@ const (
 	PostDown = "iptables -D FORWARD -i %%i -j ACCEPT; iptables -D FORWARD -o %%i -j ACCEPT; iptables -t nat -D POSTROUTING -s %s -j MASQUERADE"
 )
 
+type NodeConfig struct {
+	ClusterManagerAddr string
+	ConfigDirectory    string
+	ListenAddr         string
+	DataDirectory      string
+	Wireguard          WireguardNodeConfig
+}
+
+// WireguardNodeConfig contains all the information that gets fed into the wireguard manager at some point
+type WireguardNodeConfig struct {
+	Endpoint      string
+	InterfaceName string
+}
 type NodeManagerServer struct {
 	*server.Server
 	wgManager wireguard.WireguardManager
@@ -141,4 +154,11 @@ func NewNodeManagerServer(ctx context.Context, cfg NodeConfig) (*NodeManagerServ
 		wgManager: wgManager,
 		cancelers: []context.CancelFunc{cancel},
 	}, nil
+}
+
+func (m *NodeManagerServer) Down(device string) error {
+	for _, cancel := range m.cancelers {
+		cancel()
+	}
+	return m.wgManager.Down(device)
 }
